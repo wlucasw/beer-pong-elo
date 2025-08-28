@@ -1,7 +1,8 @@
 <script>
-	import { Card } from 'flowbite-svelte';
+	import { Card, Spinner } from 'flowbite-svelte';
 	import { Button } from 'flowbite-svelte';
-	import { PlayCircle, Trophy, History } from 'lucide-svelte';
+	import { CirclePlay, Trophy, History } from 'lucide-svelte';
+	let loading = false;
 
 	let leaderboard = [
 		{ name: 'Alice', elo: 1520 },
@@ -10,16 +11,6 @@
 	];
 </script>
 
-<!-- Header -->
-<header class="flex items-center justify-between bg-gray-900 p-4 text-white shadow">
-	<h1 class="flex items-center gap-2 text-2xl font-bold">🍺 Beer Pong Tracker</h1>
-	<nav class="space-x-4">
-		<a href="#" class="hover:underline">Home</a>
-		<a href="#" class="hover:underline">Matches</a>
-		<a href="#" class="hover:underline">Players</a>
-	</nav>
-</header>
-
 <main class="space-y-10 p-6">
 	<!-- Quick Actions -->
 	<section>
@@ -27,12 +18,29 @@
 			<Card
 				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
 			>
-				<PlayCircle class="mb-3 h-12 w-12 text-red-500" />
+				<CirclePlay class="mb-3 h-12 w-12 text-red-500" />
 				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Start a Match</h5>
 				<p class="mb-4 font-normal text-gray-600">
 					Begin recording a new beer pong game shot-by-shot.
 				</p>
-				<Button color="red" class="rounded-full px-6">Start</Button>
+				<Button
+					color="red"
+					class="rounded-full px-6"
+					disabled={loading}
+					onclick={() => {
+						loading = true;
+						window.location.href = '/match/setup';
+					}}
+				>
+					{#if loading}
+						<span class="flex items-center">
+							<Spinner class="me-3" size="4" color="gray" />
+							Loading...
+						</span>
+					{:else}
+						Start
+					{/if}
+				</Button>
 			</Card>
 
 			<Card
