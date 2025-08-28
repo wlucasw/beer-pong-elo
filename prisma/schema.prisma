@@ -20,8 +20,8 @@ model Player {
 model Match {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  teamA     MatchTeamA[]
-  teamB     MatchTeamB[]
+  teamAmineSide     MatchTeamA[]
+  teamRobinSide     MatchTeamB[]
   winnerA   Boolean
   winnerB   Boolean
 }
