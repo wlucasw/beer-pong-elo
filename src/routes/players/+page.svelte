@@ -16,13 +16,13 @@
 		if (newPlayerName.trim() === '') return;
 		players = [...players, { id: -1, name: newPlayerName, elo: 1000 }];
 		localStorage.setItem('players', JSON.stringify(players));
-		newPlayerName = '';
 		const res = await fetch('/api/player', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ name: newPlayerName })
 		});
 
+		newPlayerName = '';
 		const result = await res.json();
 		console.log('Server response:', result);
 	}
