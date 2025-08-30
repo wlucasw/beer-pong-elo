@@ -1,48 +1,84 @@
 <script lang="ts">
-	import { Button, Input } from 'flowbite-svelte';
+	import {
+		Table,
+		TableHead,
+		TableBody,
+		TableHeadCell,
+		TableBodyCell,
+		TableBodyRow
+	} from 'flowbite-svelte';
+	import { Button, Input, Card } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import type { Player } from '../../domain/Player';
 
 	let players: Player[] = [];
 	let newPlayerName = '';
 
-	// Simulate fetching players from an API or local storage
 	onMount(async () => {
 		const res = await fetch('/api/player');
 		players = await res.json();
+		sortPlayers();
 	});
+
+	function sortPlayers() {
+		players = [...players].sort((a, b) => b.elo - a.elo);
+	}
 
 	async function addPlayer() {
 		if (newPlayerName.trim() === '') return;
-		players = [...players, { id: -1, name: newPlayerName, elo: 1000 }];
-		localStorage.setItem('players', JSON.stringify(players));
+
 		const res = await fetch('/api/player', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ name: newPlayerName })
 		});
 
+		const created = await res.json();
+		players = [...players, created];
+		sortPlayers();
+
 		newPlayerName = '';
-		const result = await res.json();
-		console.log('Server response:', result);
+	}
+
+	function rowClass(idx: number) {
+		if (idx === 0) return 'bg-yellow-200 font-bold'; // Gold
+		if (idx === 1) return 'bg-gray-200 font-semibold'; // Silver
+		if (idx === 2) return 'bg-amber-700/30 font-medium'; // Bronze
+		return '';
 	}
 </script>
 
-<h1>Players</h1>
+<main class="flex flex-col items-center space-y-6 p-6">
+	<h1 class="text-2xl font-bold">🏆 Leaderboard</h1>
 
-<ul>
-	{#each players as player}
-		<li>{player.name}</li>
-	{/each}
-</ul>
+	<Card class="w-full max-w-2xl">
+		<Table>
+			<TableHead>
+				<TableHeadCell class="w-16 text-center">#</TableHeadCell>
+				<TableHeadCell>Player</TableHeadCell>
+				<TableHeadCell class="text-right">ELO</TableHeadCell>
+			</TableHead>
+			<TableBody>
+				{#each players as player, idx}
+					<TableBodyRow class={rowClass(idx)}>
+						<TableBodyCell class="text-center font-semibold">{idx + 1}</TableBodyCell>
+						<TableBodyCell>{player.name}</TableBodyCell>
+						<TableBodyCell class="text-right">{player.elo}</TableBodyCell>
+					</TableBodyRow>
+				{/each}
+			</TableBody>
+		</Table>
+	</Card>
 
-<div class="mt-4 flex items-center justify-end gap-2">
-	<Input
-		type="text"
-		placeholder="Enter player name"
-		bind:value={newPlayerName}
-		onkeydown={(e) => e.key === 'Enter' && addPlayer()}
-		class="w-64"
-	/>
-	<Button onclick={addPlayer} class="whitespace-nowrap">Ajouter un joueur</Button>
-</div>
+	<!-- Add Player Form -->
+	<div class="mt-4 flex items-center gap-2">
+		<Input
+			type="text"
+			placeholder="Enter player name"
+			bind:value={newPlayerName}
+			onkeydown={(e) => e.key === 'Enter' && addPlayer()}
+			class="w-64"
+		/>
+		<Button onclick={addPlayer} class="whitespace-nowrap">+ Add Player</Button>
+	</div>
+</main>
