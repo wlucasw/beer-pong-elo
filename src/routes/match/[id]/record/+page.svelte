@@ -3,6 +3,7 @@
 	import { Button, Card } from 'flowbite-svelte';
 	import CupTriangle from '$lib/components/CupTriangle.svelte';
 	import GameRecap from '$lib/components/GameRecap.svelte';
+	import { goto } from '$app/navigation';
 
 	export let params;
 	let match: any = null;
@@ -13,6 +14,12 @@
 		[];
 
 	const cups = [[1], [2, 3], [4, 5, 6], [7, 8, 9, 10]];
+
+	$: isGameOverPlausible =
+		shots.filter((s) => s.team === 'A' && s.hit && s.cup).length === 10 ||
+		shots.filter((s) => s.team === 'B' && s.hit && s.cup).length === 10;
+
+	$: showWinnerModal = false;
 
 	onMount(async () => {
 		const res = await fetch(`/api/match/${params.id}`);
@@ -77,6 +84,15 @@
 		if (uniqueCups.length < 10) return false;
 		const lastHit = teamShots.sort((a, b) => b.sequence - a.sequence)[0];
 		return lastHit && lastHit.cup === cup;
+	}
+	async function endGame(winner: 'A' | 'B') {
+		await fetch(`/api/match/${match.id}/end`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ winner })
+		});
+
+		goto(`/`);
 	}
 </script>
 
@@ -147,6 +163,44 @@
 					{/each}
 				</div>
 			</Card>
+		</div>
+		<div class="mt-6">
+			<!-- End Game Button and Winner Modal -->
+			<Button
+				color="red"
+				size="md"
+				onclick={() => (showWinnerModal = true)}
+				disabled={!isGameOverPlausible}>🏁 fin de partie</Button
+			>
+
+			{#if showWinnerModal}
+				<div class="bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black">
+					<div class="min-w-[300px] rounded-lg bg-white p-6 shadow-lg">
+						<h3 class="mb-4 text-lg font-semibold">Sélectionnez l'équipe gagnante</h3>
+						<div class="flex flex-col gap-3">
+							<Button color="blue" onclick={() => endGame('A')}>
+								🏆 {match.teamAmineSide[0]?.teamName || 'Team Amine'}
+							</Button>
+							<div class="mb-2 ml-2 text-xs text-gray-500">
+								{#each match.teamAmineSide as entry, i}
+									{entry.player.name}{i < match.teamAmineSide.length - 1 ? ', ' : ''}
+								{/each}
+							</div>
+							<Button color="red" onclick={() => endGame('B')}>
+								🏆 {match.teamRobinSide[0]?.teamName || 'Team Robin'}
+							</Button>
+							<div class="mb-2 ml-2 text-xs text-gray-500">
+								{#each match.teamRobinSide as entry, i}
+									{entry.player.name}{i < match.teamRobinSide.length - 1 ? ', ' : ''}
+								{/each}
+							</div>
+						</div>
+						<Button class="mt-4" color="gray" onclick={() => (showWinnerModal = false)}
+							>Annuler</Button
+						>
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Live shot history -->

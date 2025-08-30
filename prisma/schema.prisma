@@ -26,6 +26,7 @@ model Match {
   teamRobinSide     MatchTeamB[]
   winnerA   Boolean
   winnerB   Boolean
+  status    String   @default("ONGOING") // PENDING | ONGOING | FINISHED
 
   Shot Shot[]
 }
