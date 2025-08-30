@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Button, Card } from 'flowbite-svelte';
 	import CupTriangle from '$lib/components/CupTriangle.svelte';
+	import GameRecap from '$lib/components/GameRecap.svelte';
 
 	export let params;
 	let match: any = null;
@@ -60,6 +61,14 @@
 	function cupHit(cup: number, team: 'A' | 'B') {
 		return shots.some((s) => s.cup === cup && s.team === team && s.hit);
 	}
+
+	function isLastStandingCup(cup: number, team: 'A' | 'B') {
+		const teamShots = shots.filter((s) => s.team === team && s.hit && s.cup);
+		const uniqueCups = Array.from(new Set(teamShots.map((s) => s.cup)));
+		if (uniqueCups.length < 10) return false;
+		const lastHit = teamShots.sort((a, b) => b.sequence - a.sequence)[0];
+		return lastHit && lastHit.cup === cup;
+	}
 </script>
 
 <main class="flex flex-col items-center space-y-6 p-6">
@@ -77,7 +86,7 @@
 					{cups}
 					bind:selectedCup
 					onSelectCup={(cup) => (selectedCup = cup)}
-					isHit={(cup) => cupHit(cup, 'A')}
+					isHit={(cup) => cupHit(cup, 'A') && !isLastStandingCup(cup, 'A')}
 				/>
 
 				<div class="mt-2">
@@ -85,8 +94,11 @@
 						<div class="my-2 flex items-center justify-between">
 							<span class="mr-2">{entry.player.name}</span>
 							<div class="space-x-2">
-								<Button size="xs" class="mb-2" onclick={() => recordShot(entry.playerId, true, 'A')}
-									>✅ Hit</Button
+								<Button
+									size="xs"
+									class="mb-2"
+									onclick={() => recordShot(entry.playerId, true, 'A')}
+									disabled={selectedCup === null}>✅ Hit</Button
 								>
 								<Button size="xs" color="red" onclick={() => recordShot(entry.playerId, false, 'A')}
 									>❌ Miss</Button
@@ -105,15 +117,18 @@
 					{cups}
 					bind:selectedCup
 					onSelectCup={(cup) => (selectedCup = cup)}
-					isHit={(cup) => cupHit(cup, 'B')}
+					isHit={(cup) => cupHit(cup, 'B') && !isLastStandingCup(cup, 'B')}
 				/>
 				<div class="mt-2">
 					{#each match.teamRobinSide as entry}
 						<div class="my-2 flex items-center justify-between">
 							<span class="mr-2">{entry.player.name}</span>
 							<div class="space-x-2">
-								<Button size="xs" class="mb-2" onclick={() => recordShot(entry.playerId, true, 'B')}
-									>✅ Hit</Button
+								<Button
+									size="xs"
+									class="mb-2"
+									onclick={() => recordShot(entry.playerId, true, 'B')}
+									disabled={selectedCup === null}>✅ Hit</Button
 								>
 								<Button size="xs" color="red" onclick={() => recordShot(entry.playerId, false, 'B')}
 									>❌ Miss</Button
@@ -126,28 +141,12 @@
 		</div>
 
 		<!-- Live shot history -->
-		<Card class="mt-6 w-full max-w-2xl p-4">
-			<h2 class="mb-2 font-semibold">📊 Shot History</h2>
-			<table class="w-full border-collapse text-left text-sm">
-				<thead>
-					<tr class="border-b">
-						<th class="p-2">Player</th>
-						<th class="p-2">Cup</th>
-						<th class="p-2">Result</th>
-						<th class="p-2">Team</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each shots as shot}
-						<tr class="border-b">
-							<td class="p-2">{shot.player}</td>
-							<td class="p-2">{shot.cup ?? '-'}</td>
-							<td class="p-2">{shot.hit ? '✅ Hit' : '❌ Miss'}</td>
-							<td class="p-2">{shot.team === 'A' ? 'Team Amine' : 'Team Robin'}</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</Card>
+		{#if shots.length}
+			<div class="overflow-x-auto" style="max-width: 90vw;">
+				<div class="min-w-max">
+					<GameRecap {shots} />
+				</div>
+			</div>
+		{/if}
 	{/if}
 </main>
