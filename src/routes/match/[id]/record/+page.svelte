@@ -17,6 +17,15 @@
 	onMount(async () => {
 		const res = await fetch(`/api/match/${params.id}`);
 		match = await res.json();
+		const recapRes = await fetch(`/api/match/${params.id}/recap`);
+		const recapData: {
+			player: string;
+			cup: number;
+			hit: boolean;
+			team: 'A' | 'B';
+			sequence: number;
+		}[] = await recapRes.json();
+		shots = recapData || [];
 		loading = false;
 	});
 
