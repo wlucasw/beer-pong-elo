@@ -13,13 +13,34 @@
 		const res = await fetch('/api/player');
 		players = await res.json();
 		playerOptions = players.map((player) => ({
-			value: player.id.toString(), // or another unique identifier
-			name: player.name // add the required 'name' property
+			value: player.id.toString(),
+			name: player.name
 		}));
 	});
 
-	function handleSubmit() {
-		// Handle form submission logic here
+	async function handleSubmit() {
+		console.log('teamAmine:', teamAmine);
+		console.log('teamRobin:', teamRobin);
+		console.log('ballNumber:', ballNumber);
+		const res = await fetch('/api/match', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				teamAmine,
+				teamRobin,
+				ballNumber
+			})
+		});
+
+		if (res.ok) {
+			const match = await res.json();
+			console.log('Match saved ✅', match);
+			// maybe redirect or reset form
+		} else {
+			console.error('Failed to save match ❌');
+		}
 	}
 </script>
 
@@ -29,13 +50,13 @@
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<MultiSelect
 				items={playerOptions}
-				value={teamAmine}
+				bind:value={teamAmine}
 				size="lg"
 				placeholder="Team Amine side"
 			/>
 			<MultiSelect
 				items={playerOptions}
-				value={teamRobin}
+				bind:value={teamRobin}
 				size="lg"
 				placeholder="Team Robin side"
 			/>
@@ -47,6 +68,6 @@
 			bind:value={ballNumber}
 			class="w-full"
 		/>
-		<Button type="submit" class="w-full">Valider</Button>
+		<Button type="submit" class="w-full" onclick={handleSubmit}>Valider</Button>
 	</Card>
 </main>
