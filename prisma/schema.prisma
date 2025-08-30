@@ -56,5 +56,8 @@ model Shot {
   player    Player   @relation(fields: [playerId], references: [id])
   playerId  Int
   hit       Boolean
-  cup       Int?     // 1..10 for beer pong glasses, null if miss
+  cup       Int?
+  team      String   // optional: 'A' | 'B' if you want
+  sequence  Int      @default(0) // the shot order in the match
 }
+

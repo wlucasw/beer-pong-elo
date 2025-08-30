@@ -8,7 +8,8 @@
 	let loading = true;
 	let selectedCup: number | null = null;
 
-	let shots: { player: string; cup: number; hit: boolean; team: 'A' | 'B' }[] = [];
+	let shots: { player: string; cup: number; hit: boolean; team: 'A' | 'B'; sequence: number }[] =
+		[];
 
 	const cups = [[1], [2, 3], [4, 5, 6], [7, 8, 9, 10]];
 
@@ -19,21 +20,34 @@
 	});
 
 	async function recordShot(playerId: number, hit: boolean, team: 'A' | 'B') {
+		const lastShot = shots
+			.filter((s) => s.team === team)
+			.sort((a, b) => b.sequence - a.sequence)[0];
+
+		const nextSequence = lastShot ? lastShot.sequence + 1 : 1;
+
 		await fetch('/api/shot', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ matchId: match.id, playerId, hit, cup: hit ? selectedCup : null })
+			body: JSON.stringify({
+				matchId: match.id,
+				playerId,
+				hit,
+				cup: hit ? selectedCup : null,
+				team,
+				sequence: nextSequence
+			})
 		});
 
+		// Add to local shots for live view
 		const playerName =
 			match.teamAmineSide.find((p: { playerId: number }) => p.playerId === playerId)?.player.name ||
 			match.teamRobinSide.find((p: { playerId: number }) => p.playerId === playerId)?.player.name;
 
-		if (hit && selectedCup !== null) {
-			shots = [...shots, { player: playerName, cup: selectedCup, hit, team }];
-		} else {
-			shots = [...shots, { player: playerName, cup: 0, hit, team }];
-		}
+		shots = [
+			...shots,
+			{ player: playerName, cup: selectedCup ?? 0, hit, team, sequence: nextSequence }
+		];
 
 		selectedCup = null;
 	}
