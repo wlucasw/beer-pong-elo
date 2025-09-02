@@ -92,7 +92,7 @@
 			body: JSON.stringify({ winner })
 		});
 
-		goto(`/`);
+		goto(`/match/${match.id}/recap`);
 	}
 </script>
 

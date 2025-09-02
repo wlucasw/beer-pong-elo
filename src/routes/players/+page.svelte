@@ -60,7 +60,11 @@
 			</TableHead>
 			<TableBody>
 				{#each players as player, idx}
-					<TableBodyRow class={rowClass(idx)}>
+					<TableBodyRow
+						class={rowClass(idx)}
+						onclick={() => (window.location.href = `/player/${player.id}`)}
+						style="cursor:pointer;"
+					>
 						<TableBodyCell class="text-center font-semibold">{idx + 1}</TableBodyCell>
 						<TableBodyCell>{player.name}</TableBodyCell>
 						<TableBodyCell class="text-right">{player.elo}</TableBodyCell>
