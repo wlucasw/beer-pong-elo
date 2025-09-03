@@ -21,6 +21,9 @@
 
 	$: showWinnerModal = false;
 
+	$: isHitA = (cup: number) => shots.some((s) => s.cup === cup && s.team === 'A' && s.hit);
+	$: isHitB = (cup: number) => shots.some((s) => s.cup === cup && s.team === 'B' && s.hit);
+
 	onMount(async () => {
 		const res = await fetch(`/api/match/${params.id}`);
 		match = await res.json();
@@ -74,10 +77,6 @@
 		return 10 - new Set(teamShots.map((s) => s.cup)).size;
 	}
 
-	function cupHit(cup: number, team: 'A' | 'B') {
-		return shots.some((s) => s.cup === cup && s.team === team && s.hit);
-	}
-
 	function isLastStandingCup(cup: number, team: 'A' | 'B') {
 		const teamShots = shots.filter((s) => s.team === team && s.hit && s.cup);
 		const uniqueCups = Array.from(new Set(teamShots.map((s) => s.cup)));
@@ -93,6 +92,33 @@
 		});
 
 		goto(`/match/${match.id}/recap`);
+	}
+	async function undoLastShot() {
+		if (shots.length === 0) return;
+
+		// Get last shot
+		const lastShot = shots[shots.length - 1];
+
+		// Optimistically remove locally
+		shots = shots.slice(0, -1);
+
+		try {
+			// If your backend supports deleting last shot:
+			await fetch(`/api/match/${match.id}/undo`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ sequence: lastShot.sequence, team: lastShot.team })
+			});
+
+			// Re-fetch recap from backend to sync state
+			const recapRes = await fetch(`/api/match/${match.id}/recap`);
+			const recapData = await recapRes.json();
+			shots = recapData || [];
+		} catch (err) {
+			console.error('Undo failed:', err);
+			// Rollback in case of failure
+			shots = [...shots, lastShot];
+		}
 	}
 </script>
 
@@ -111,7 +137,7 @@
 					{cups}
 					bind:selectedCup
 					onSelectCup={(cup) => (selectedCup = cup)}
-					isHit={(cup) => cupHit(cup, 'A') && !isLastStandingCup(cup, 'A')}
+					isHit={isHitA}
 				/>
 
 				<div class="mt-2">
@@ -142,7 +168,7 @@
 					{cups}
 					bind:selectedCup
 					onSelectCup={(cup) => (selectedCup = cup)}
-					isHit={(cup) => cupHit(cup, 'B') && !isLastStandingCup(cup, 'B')}
+					isHit={isHitB}
 				/>
 				<div class="mt-2">
 					{#each match.teamRobinSide as entry}
@@ -165,14 +191,18 @@
 			</Card>
 		</div>
 		<div class="mt-6">
-			<!-- End Game Button and Winner Modal -->
-			<Button
-				color="red"
-				size="md"
-				onclick={() => (showWinnerModal = true)}
-				disabled={!isGameOverPlausible}>🏁 fin de partie</Button
-			>
+			<div class="mt-6 flex gap-4">
+				<Button color="gray" size="md" onclick={undoLastShot} disabled={shots.length === 0}
+					>↩️ Undo Last</Button
+				>
 
+				<Button
+					color="red"
+					size="md"
+					onclick={() => (showWinnerModal = true)}
+					disabled={!isGameOverPlausible}>🏁 Fin de partie</Button
+				>
+			</div>
 			{#if showWinnerModal}
 				<div class="bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black">
 					<div class="min-w-[300px] rounded-lg bg-white p-6 shadow-lg">
