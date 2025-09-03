@@ -19,10 +19,7 @@
 				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
 			>
 				<CirclePlay class="mb-3 h-12 w-12 text-red-500" />
-				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Start a Match</h5>
-				<p class="mb-4 font-normal text-gray-600">
-					Begin recording a new beer pong game shot-by-shot.
-				</p>
+				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Démarrer un match</h5>
 				<Button
 					color="red"
 					class="rounded-full px-6"
@@ -38,7 +35,7 @@
 							Loading...
 						</span>
 					{:else}
-						Start
+						Démarrer
 					{/if}
 				</Button>
 			</Card>
@@ -47,8 +44,7 @@
 				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
 			>
 				<Trophy class="mb-3 h-12 w-12 text-yellow-500" />
-				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Leaderboard</h5>
-				<p class="mb-4 font-normal text-gray-600">See who’s on top with the Elo ranking system.</p>
+				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Classement</h5>
 				<Button
 					color="yellow"
 					class="rounded-full px-6"
@@ -64,7 +60,7 @@
 							Loading...
 						</span>
 					{:else}
-						View
+						Voir
 					{/if}
 				</Button>
 			</Card>
@@ -73,10 +69,7 @@
 				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
 			>
 				<History class="mb-3 h-12 w-12 text-blue-500" />
-				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Match History</h5>
-				<p class="mb-4 font-normal text-gray-600">
-					Look back at all the matches recorded over time.
-				</p>
+				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Historique des matches</h5>
 				<Button
 					color="blue"
 					class="rounded-full px-6"
@@ -92,7 +85,7 @@
 							Loading...
 						</span>
 					{:else}
-						Browse
+						Parcourir
 					{/if}
 				</Button>
 			</Card>

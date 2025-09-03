@@ -90,11 +90,6 @@
 		selectedCups = [];
 	}
 
-	function cupsRemaining(team: 'A' | 'B') {
-		const teamShots = shots.filter((s) => s.team === team && s.hit && s.cup);
-		return 10 - new Set(teamShots.map((s) => s.cup)).size;
-	}
-
 	function isLastStandingCup(cup: number, team: 'A' | 'B') {
 		const teamShots = shots.reduce<number[]>((acc, s) => {
 			if (s.bounceCup && s.team === team) {
@@ -192,8 +187,7 @@
 
 		<div class="grid w-full max-w-4xl grid-cols-2 gap-6">
 			<Card class="p-4">
-				<h2 class="font-semibold text-blue-600">Team Amine</h2>
-				<p class="mb-2 text-sm">Cups remaining: {cupsRemaining('A')}</p>
+				<h2 class="mb-2 font-semibold text-blue-600">Team Amine</h2>
 
 				<CupTriangle
 					{cups}
@@ -240,8 +234,7 @@
 			</Card>
 
 			<Card class="p-4">
-				<h2 class="font-semibold text-red-600">Team Robin</h2>
-				<p class="mb-2 text-sm">Cups remaining: {cupsRemaining('B')}</p>
+				<h2 class="mb-2 font-semibold text-red-600">Team Robin</h2>
 
 				<CupTriangle
 					{cups}
