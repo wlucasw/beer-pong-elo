@@ -24,6 +24,7 @@ export const GET: RequestHandler = async ({ params }) => {
 				playerId: shot.playerId,
 				player: playerMap[shot.playerId] || null,
 				cup: shot.cup,
+				bounceCup: shot.bounceCup,
 				hit: shot.hit,
 				team: shot.team,
 				sequence: shot.sequence

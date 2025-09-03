@@ -8,21 +8,39 @@
 	export let params;
 	let match: any = null;
 	let loading = true;
-	let selectedCup: number | null = null;
+	let selectedCups: number[] = [];
 
-	let shots: { player: string; cup: number; hit: boolean; team: 'A' | 'B'; sequence: number }[] =
-		[];
+	let shots: {
+		player: string;
+		cup: number;
+		bounceCup?: number;
+		hit: boolean;
+		team: 'A' | 'B';
+		sequence: number;
+	}[] = [];
 
 	const cups = [[1], [2, 3], [4, 5, 6], [7, 8, 9, 10]];
 
 	$: isGameOverPlausible =
-		shots.filter((s) => s.team === 'A' && s.hit && s.cup).length === 10 ||
-		shots.filter((s) => s.team === 'B' && s.hit && s.cup).length === 10;
+		shots.reduce<number[]>((acc, s) => {
+			if (s.bounceCup && s.team === 'A') {
+				acc.push(s.bounceCup);
+			}
+			return s.team === 'A' && s.hit ? [...acc, s.cup] : acc;
+		}, []).length === 10 ||
+		shots.reduce<number[]>((acc, s) => {
+			if (s.bounceCup && s.team === 'B') {
+				acc.push(s.bounceCup);
+			}
+			return s.team === 'B' && s.hit ? [...acc, s.cup] : acc;
+		}, []).length === 10;
 
 	$: showWinnerModal = false;
 
-	$: isHitA = (cup: number) => shots.some((s) => s.cup === cup && s.team === 'A' && s.hit);
-	$: isHitB = (cup: number) => shots.some((s) => s.cup === cup && s.team === 'B' && s.hit);
+	$: isHitA = (cup: number) =>
+		shots.some((s) => (s.cup === cup || s.bounceCup === cup) && s.team === 'A' && s.hit);
+	$: isHitB = (cup: number) =>
+		shots.some((s) => (s.cup === cup || s.bounceCup === cup) && s.team === 'B' && s.hit);
 
 	onMount(async () => {
 		const res = await fetch(`/api/match/${params.id}`);
@@ -53,7 +71,7 @@
 				matchId: match.id,
 				playerId,
 				hit,
-				cup: hit ? selectedCup : null,
+				cup: hit ? selectedCups[0] : null,
 				team,
 				sequence: nextSequence
 			})
@@ -66,10 +84,10 @@
 
 		shots = [
 			...shots,
-			{ player: playerName, cup: selectedCup ?? 0, hit, team, sequence: nextSequence }
+			{ player: playerName, cup: selectedCups[0] ?? 0, hit, team, sequence: nextSequence }
 		];
 
-		selectedCup = null;
+		selectedCups = [];
 	}
 
 	function cupsRemaining(team: 'A' | 'B') {
@@ -78,12 +96,19 @@
 	}
 
 	function isLastStandingCup(cup: number, team: 'A' | 'B') {
-		const teamShots = shots.filter((s) => s.team === team && s.hit && s.cup);
-		const uniqueCups = Array.from(new Set(teamShots.map((s) => s.cup)));
-		if (uniqueCups.length < 10) return false;
-		const lastHit = teamShots.sort((a, b) => b.sequence - a.sequence)[0];
+		const teamShots = shots.reduce<number[]>((acc, s) => {
+			if (s.bounceCup && s.team === team) {
+				acc.push(s.bounceCup);
+			}
+			return s.team === team && s.hit ? [...acc, s.cup] : acc;
+		}, []);
+		if (teamShots.length < 10) return false;
+		const lastHit = shots
+			.filter((s) => s.team === team && s.hit)
+			.sort((a, b) => b.sequence - a.sequence)[0];
 		return lastHit && lastHit.cup === cup;
 	}
+
 	async function endGame(winner: 'A' | 'B') {
 		await fetch(`/api/match/${match.id}/end`, {
 			method: 'POST',
@@ -120,6 +145,43 @@
 			shots = [...shots, lastShot];
 		}
 	}
+
+	async function recordBounce(playerId: number, team: 'A' | 'B') {
+		const lastShot = shots
+			.filter((s) => s.team === team)
+			.sort((a, b) => b.sequence - a.sequence)[0];
+		const nextSequence = lastShot ? lastShot.sequence + 1 : 1;
+
+		await fetch('/api/shot/bounce', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				matchId: match.id,
+				playerId,
+				cups: selectedCups, // two cups
+				team,
+				sequence: nextSequence
+			})
+		});
+
+		const playerName =
+			match.teamAmineSide.find((p: { playerId: number }) => p.playerId === playerId)?.player.name ||
+			match.teamRobinSide.find((p: { playerId: number }) => p.playerId === playerId)?.player.name;
+
+		shots = [
+			...shots,
+			{
+				player: playerName,
+				cup: selectedCups[0],
+				bounceCup: selectedCups[1],
+				hit: true,
+				team,
+				sequence: nextSequence
+			}
+		];
+
+		selectedCups = [];
+	}
 </script>
 
 <main class="flex flex-col items-center space-y-6 p-6">
@@ -135,9 +197,15 @@
 
 				<CupTriangle
 					{cups}
-					bind:selectedCup
-					onSelectCup={(cup) => (selectedCup = cup)}
-					isHit={isHitA}
+					bind:selectedCups
+					onSelectCup={(cup) => {
+						if (selectedCups.includes(cup)) {
+							selectedCups = selectedCups.filter((c) => c !== cup);
+						} else {
+							selectedCups = [...selectedCups, cup];
+						}
+					}}
+					isHit={(cup) => isHitA(cup) && !isLastStandingCup(cup, 'A')}
 				/>
 
 				<div class="mt-2">
@@ -149,11 +217,22 @@
 									size="xs"
 									class="mb-2"
 									onclick={() => recordShot(entry.playerId, true, 'A')}
-									disabled={selectedCup === null}>✅ Hit</Button
+									disabled={selectedCups.length !== 1}>✅ Touché</Button
 								>
-								<Button size="xs" color="red" onclick={() => recordShot(entry.playerId, false, 'A')}
-									>❌ Miss</Button
+								<Button
+									size="xs"
+									color="red"
+									class="mb-2"
+									onclick={() => recordShot(entry.playerId, false, 'A')}>❌ Raté</Button
 								>
+								<Button
+									size="xs"
+									color="yellow"
+									onclick={() => recordBounce(entry.playerId, 'A')}
+									disabled={selectedCups.length !== 2}
+								>
+									🏓 Rebond
+								</Button>
 							</div>
 						</div>
 					{/each}
@@ -166,9 +245,15 @@
 
 				<CupTriangle
 					{cups}
-					bind:selectedCup
-					onSelectCup={(cup) => (selectedCup = cup)}
-					isHit={isHitB}
+					bind:selectedCups
+					onSelectCup={(cup) => {
+						if (selectedCups.includes(cup)) {
+							selectedCups = selectedCups.filter((c) => c !== cup);
+						} else {
+							selectedCups = [...selectedCups, cup];
+						}
+					}}
+					isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
 				/>
 				<div class="mt-2">
 					{#each match.teamRobinSide as entry}
@@ -179,11 +264,22 @@
 									size="xs"
 									class="mb-2"
 									onclick={() => recordShot(entry.playerId, true, 'B')}
-									disabled={selectedCup === null}>✅ Hit</Button
+									disabled={selectedCups.length !== 1}>✅ Touché</Button
 								>
-								<Button size="xs" color="red" onclick={() => recordShot(entry.playerId, false, 'B')}
-									>❌ Miss</Button
+								<Button
+									size="xs"
+									color="red"
+									class="mb-2"
+									onclick={() => recordShot(entry.playerId, false, 'B')}>❌ Raté</Button
 								>
+								<Button
+									size="xs"
+									color="yellow"
+									onclick={() => recordBounce(entry.playerId, 'B')}
+									disabled={selectedCups.length !== 2}
+								>
+									🏓 Rebond
+								</Button>
 							</div>
 						</div>
 					{/each}
@@ -193,7 +289,7 @@
 		<div class="mt-6">
 			<div class="mt-6 flex gap-4">
 				<Button color="gray" size="md" onclick={undoLastShot} disabled={shots.length === 0}
-					>↩️ Undo Last</Button
+					>↩️ Undo</Button
 				>
 
 				<Button

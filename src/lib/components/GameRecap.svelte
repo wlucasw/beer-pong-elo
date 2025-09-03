@@ -12,6 +12,7 @@
 		player: string;
 		hit: boolean;
 		cup: number;
+		bounceCup?: number;
 		sequence: number;
 	}[] = [];
 
@@ -25,7 +26,7 @@
 	$: grid = players.map((player) => {
 		return Array.from({ length: maxSequence }, (_, i) => {
 			const shot = shots.find((s) => s.player === player && s.sequence === i + 1);
-			return shot ? { hit: shot.hit, cup: shot.cup } : null;
+			return shot ? { hit: shot.hit, cup: shot.cup, bounceCup: shot.bounceCup } : null;
 		});
 	});
 </script>
@@ -59,7 +60,14 @@
 							class="h-6 w-6 p-1 text-center"
 							style="background-color: {cell === null ? '#fff' : cell.hit ? '#4ade80' : '#f87171'}"
 						>
-							{cell === null ? '' : cell.hit ? cell.cup : ''}
+							{#if cell === null}{:else if cell.hit}
+								{#if cell.bounceCup}
+									{cell.bounceCup},
+								{/if}
+								{#if cell.cup}
+									{cell.cup}
+								{/if}
+							{:else}{/if}
 						</TableBodyCell>
 					{/each}
 				</TableBodyRow>

@@ -58,6 +58,7 @@ model Shot {
   playerId  Int
   hit       Boolean
   cup       Int?
+  bounceCup Int?     // optional: for bounce shots
   team      String   // optional: 'A' | 'B' if you want
   sequence  Int      @default(0) // the shot order in the match
 }
