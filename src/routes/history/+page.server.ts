@@ -10,5 +10,7 @@ export const load: PageServerLoad = async () => {
 		}
 	});
 
-	return { matches };
+	const filteredMatches = matches.filter((match) => match.winnerA || match.winnerB);
+
+	return { matches: filteredMatches };
 };

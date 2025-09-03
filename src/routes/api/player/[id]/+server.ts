@@ -33,6 +33,13 @@ export const GET: RequestHandler = async ({ params }) => {
 	let wins = 0;
 	let losses = 0;
 
+	const shots = await prisma.shot.findMany({
+		where: { playerId }
+	});
+
+	const accuracy =
+		shots.length > 0 ? (shots.filter((shot) => shot.hit).length / shots.length) * 100 : 0;
+
 	// Format match data
 	const recentMatches = matches
 		.filter((match) => match.winnerA || match.winnerB)
@@ -56,12 +63,16 @@ export const GET: RequestHandler = async ({ params }) => {
 			};
 		});
 
+	const matchesPlayed = wins + losses;
+
 	const response = {
 		...player,
-		matchesPlayed: wins + losses,
+		matchesPlayed,
 		wins,
 		losses,
-		recentMatches
+		recentMatches,
+		winPercent: matchesPlayed > 0 ? (wins / matchesPlayed) * 100 : 0,
+		accuracy
 	};
 
 	return new Response(JSON.stringify(response), { status: 200 });

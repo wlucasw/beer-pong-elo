@@ -35,14 +35,23 @@
 		<Card class="w-full max-w-lg text-center">
 			<p class="text-lg font-semibold">
 				Elo:
-				<Badge color="info" class="ml-2">{player.elo}</Badge>
+				<Badge color="blue" class="ml-2">{player.elo}</Badge>
 			</p>
-			<div class="mt-3 grid grid-cols-3 gap-2 text-sm">
+			<div class="mt-3 grid grid-cols-3 items-center justify-items-center gap-2 text-sm">
 				<p class="text-gray-600">
 					Played: <span class="font-semibold">{player.matchesPlayed}</span>
 				</p>
-				<p class="text-green-600">Wins: <span class="font-semibold">{player.wins}</span></p>
-				<p class="text-red-600">Losses: <span class="font-semibold">{player.losses}</span></p>
+				<p class="text-green-600">Victoire: <span class="font-semibold">{player.wins}</span></p>
+				<p class="text-red-600">Défaites: <span class="font-semibold">{player.losses}</span></p>
+				<p class="text-gray-600" style="color: hsl({(120 * player.winPercent) / 100}, 70%, 45%)">
+					Winrate: <span class="font-semibold">{player.winPercent.toFixed(1)}%</span>
+				</p>
+				<p class="text-gray-600" style="color: hsl({(120 * player.accuracy) / 100}, 70%, 45%)">
+					Précision:
+					<span class="font-semibold">
+						{player.accuracy.toFixed(1)}%
+					</span>
+				</p>
 			</div>
 		</Card>
 
