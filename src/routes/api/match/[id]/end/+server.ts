@@ -1,10 +1,35 @@
 import { json } from '@sveltejs/kit';
 import prisma from '$lib/prisma';
 
-// ELO calculation helper
-function calculateElo(playerElo: number, opponentElo: number, score: number, k = 32) {
+// Elo calculation with cups remaining
+function calculateElo(
+	playerElo: number,
+	opponentElo: number,
+	{
+		didWin,
+		playerCupsRemaining,
+		opponentCupsRemaining,
+		k = 120
+	}: {
+		didWin: boolean;
+		playerCupsRemaining: number; // 0..10
+		opponentCupsRemaining: number; // 0..10
+		k?: number;
+	}
+) {
+	// Expected score based on rating difference
 	const expected = 1 / (1 + Math.pow(10, (opponentElo - playerElo) / 400));
-	return Math.round(playerElo + k * (score - expected));
+
+	// Base outcome (1 = win, 0 = loss)
+	const outcome = didWin ? 1 : 0;
+
+	// Margin factor from cups remaining
+	//   - If both at 0 → 0.5 (neutral)
+	//   - If player has more remaining → closer to 1
+	//   - If fewer → closer to 0
+	const margin = Math.abs(playerCupsRemaining - opponentCupsRemaining) / 10;
+
+	return Math.round(playerElo + k * (outcome - expected) * (0.2 + 0.8 * margin));
 }
 
 export async function POST({ params, request }) {
@@ -38,14 +63,33 @@ export async function POST({ params, request }) {
 		}
 	});
 
+	const shots = await prisma.shot.findMany({
+		where: { matchId }
+	});
+
+	const shotWithHitTeamA = shots.filter((shot) => shot.hit && shot.team === 'A');
+	const shotWithHitTeamB = shots.filter((shot) => shot.hit && shot.team === 'B');
+	const shotWithBounceTeamA = shots.filter((shot) => shot.bounceCup && shot.team === 'A');
+	const shotWithBounceTeamB = shots.filter((shot) => shot.bounceCup && shot.team === 'B');
+	const teamBRemainingCups = 10 - shotWithHitTeamA.length - shotWithBounceTeamA.length;
+	const teamARemainingCups = 10 - shotWithHitTeamB.length - shotWithBounceTeamB.length;
+
 	// Update Elo for players
 	const teamAScore = winner === 'A' ? 1 : 0;
 	const teamBScore = winner === 'B' ? 1 : 0;
 
 	for (const playerA of match.teamAmineSide) {
 		for (const playerB of match.teamRobinSide) {
-			const newEloA = calculateElo(playerA.player.elo, playerB.player.elo, teamAScore);
-			const newEloB = calculateElo(playerB.player.elo, playerA.player.elo, teamBScore);
+			const newEloA = calculateElo(playerA.player.elo, playerB.player.elo, {
+				didWin: teamAScore === 1,
+				playerCupsRemaining: teamARemainingCups,
+				opponentCupsRemaining: teamBRemainingCups
+			});
+			const newEloB = calculateElo(playerB.player.elo, playerA.player.elo, {
+				didWin: teamBScore === 1,
+				playerCupsRemaining: teamBRemainingCups,
+				opponentCupsRemaining: teamARemainingCups
+			});
 
 			await prisma.player.update({
 				where: { id: playerA.playerId },
