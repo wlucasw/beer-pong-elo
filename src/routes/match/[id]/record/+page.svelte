@@ -204,7 +204,7 @@
 
 				<div class="mt-2">
 					{#each match.teamAmineSide as entry}
-						<div class="my-2 flex items-center justify-between">
+						<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 							<span class="mr-2">{entry.player.name}</span>
 							<div class="space-x-2">
 								<Button
@@ -250,7 +250,7 @@
 				/>
 				<div class="mt-2">
 					{#each match.teamRobinSide as entry}
-						<div class="my-2 flex items-center justify-between">
+						<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 							<span class="mr-2">{entry.player.name}</span>
 							<div class="space-x-2">
 								<Button

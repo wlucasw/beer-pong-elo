@@ -16,12 +16,13 @@
 		<div class="flex justify-center space-x-2">
 			{#each row as cup}
 				<div
-					class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2
-						{selectedCups.includes(cup)
+					class="flex cursor-pointer items-center justify-center rounded-full border-2
+    {selectedCups.includes(cup)
 						? 'border-yellow-600 bg-yellow-400'
 						: isHit(cup)
 							? 'border-gray-500 bg-gray-400'
-							: 'border-gray-400 bg-gray-200'}"
+							: 'border-gray-400 bg-gray-200'}
+    h-7 w-7 text-sm sm:h-10 sm:w-10 sm:text-base lg:h-12 lg:w-12"
 					onclick={() => handleClick(cup)}
 				>
 					{cup}

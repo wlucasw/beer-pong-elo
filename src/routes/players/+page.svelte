@@ -75,13 +75,12 @@
 	</Card>
 
 	<!-- Add Player Form -->
-	<div class="mt-4 flex items-center gap-2">
+	<div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
 		<Input
 			type="text"
 			placeholder="Enter player name"
 			bind:value={newPlayerName}
 			onkeydown={(e) => e.key === 'Enter' && addPlayer()}
-			class="w-64"
 		/>
 		<Button onclick={addPlayer} class="whitespace-nowrap">+ Add Player</Button>
 	</div>
