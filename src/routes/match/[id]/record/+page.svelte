@@ -229,7 +229,7 @@
 			</Card>
 
 			<Card class="p-4">
-				<h2 class="mb-2 font-semibold text-red-600">Team Robin</h2>
+				<h2 class="mb-2 font-semibold text-red-600">Robin Side</h2>
 
 				<CupTriangle
 					{cups}
@@ -301,7 +301,7 @@
 								{/each}
 							</div>
 							<Button color="red" onclick={() => endGame('B')}>
-								🏆 {match.teamRobinSide[0]?.teamName || 'Team Robin'}
+								🏆 {match.teamRobinSide[0]?.teamName || 'Robin Side'}
 							</Button>
 							<div class="mb-2 ml-2 text-xs text-gray-500">
 								{#each match.teamRobinSide as entry, i}
@@ -329,7 +329,7 @@
 										min="0"
 										class="mt-1 w-28 rounded border px-2 py-1"
 										bind:value={scoreAmine}
-										placeholder="Team Amine"
+										placeholder="Amine Side"
 									/>
 								</div>
 
@@ -339,7 +339,7 @@
 										min="0"
 										class="mt-1 w-28 rounded border px-2 py-1"
 										bind:value={scoreRobin}
-										placeholder="Team Robin"
+										placeholder="Robin Side"
 									/>
 								</div>
 							</div>
@@ -349,7 +349,7 @@
 								onclick={() => endGame('A', Number(scoreAmine), Number(scoreRobin))}
 								disabled={scoreAmine === '' || scoreAmine === undefined || scoreAmine === null}
 							>
-								🏆 {match.teamAmineSide[0]?.teamName || 'Team Amine'}
+								🏆 {match.teamAmineSide[0]?.teamName || 'Amine Side'}
 							</Button>
 							<div class="mb-2 ml-2 text-xs text-gray-500">
 								{#each match.teamAmineSide as entry, i}
@@ -362,7 +362,7 @@
 								onclick={() => endGame('B', Number(scoreAmine), Number(scoreRobin))}
 								disabled={scoreRobin === '' || scoreRobin === undefined || scoreRobin === null}
 							>
-								🏆 {match.teamRobinSide[0]?.teamName || 'Team Robin'}
+								🏆 {match.teamRobinSide[0]?.teamName || 'Robin Side'}
 							</Button>
 							<div class="mb-2 ml-2 text-xs text-gray-500">
 								{#each match.teamRobinSide as entry, i}
