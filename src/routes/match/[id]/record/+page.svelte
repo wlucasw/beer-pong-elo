@@ -21,21 +21,12 @@
 
 	const cups = [[1], [2, 3], [4, 5, 6], [7, 8, 9, 10]];
 
-	$: isGameOverPlausible =
-		shots.reduce<number[]>((acc, s) => {
-			if (s.bounceCup && s.team === 'A') {
-				acc.push(s.bounceCup);
-			}
-			return s.team === 'A' && s.hit ? [...acc, s.cup] : acc;
-		}, []).length === 10 ||
-		shots.reduce<number[]>((acc, s) => {
-			if (s.bounceCup && s.team === 'B') {
-				acc.push(s.bounceCup);
-			}
-			return s.team === 'B' && s.hit ? [...acc, s.cup] : acc;
-		}, []).length === 10;
+	$: scoreAmine = '';
+	$: scoreRobin = '';
 
 	$: showWinnerModal = false;
+
+	$: showQuickEndButton = false;
 
 	$: isHitA = (cup: number) =>
 		shots.some((s) => (s.cup === cup || s.bounceCup === cup) && s.team === 'A' && s.hit);
@@ -104,11 +95,15 @@
 		return lastHit && lastHit.cup === cup;
 	}
 
-	async function endGame(winner: 'A' | 'B') {
+	async function endGame(
+		winner: 'A' | 'B',
+		teamARemainingCups?: number,
+		teamBRemainingCups?: number
+	) {
 		await fetch(`/api/match/${match.id}/end`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ winner })
+			body: JSON.stringify({ winner, teamARemainingCups, teamBRemainingCups })
 		});
 
 		goto(`/match/${match.id}/recap`);
@@ -285,11 +280,11 @@
 					>↩️ Undo</Button
 				>
 
-				<Button
-					color="red"
-					size="md"
-					onclick={() => (showWinnerModal = true)}
-					disabled={!isGameOverPlausible}>🏁 Fin de partie</Button
+				<Button color="red" size="md" onclick={() => (showWinnerModal = true)}
+					>🏁 Fin de partie</Button
+				>
+				<Button color="pink" size="md" onclick={() => (showQuickEndButton = true)}
+					>⚡ Fin rapide</Button
 				>
 			</div>
 			{#if showWinnerModal}
@@ -306,6 +301,67 @@
 								{/each}
 							</div>
 							<Button color="red" onclick={() => endGame('B')}>
+								🏆 {match.teamRobinSide[0]?.teamName || 'Team Robin'}
+							</Button>
+							<div class="mb-2 ml-2 text-xs text-gray-500">
+								{#each match.teamRobinSide as entry, i}
+									{entry.player.name}{i < match.teamRobinSide.length - 1 ? ', ' : ''}
+								{/each}
+							</div>
+						</div>
+						<Button class="mt-4" color="gray" onclick={() => (showWinnerModal = false)}
+							>Annuler</Button
+						>
+					</div>
+				</div>
+			{/if}
+
+			{#if showQuickEndButton}
+				<div class="bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black">
+					<div class="min-w-[300px] rounded-lg bg-white p-6 shadow-lg">
+						<h3 class="mb-4 text-lg font-semibold">Sélectionnez l'équipe gagnante</h3>
+						<div class="flex flex-col gap-3">
+							<div class="flex items-center gap-4">
+								<label class="text-sm">Ecocups restante </label>
+								<div class="flex flex-col">
+									<input
+										type="number"
+										min="0"
+										class="mt-1 w-28 rounded border px-2 py-1"
+										bind:value={scoreAmine}
+										placeholder="Team Amine"
+									/>
+								</div>
+
+								<div class="flex flex-col">
+									<input
+										type="number"
+										min="0"
+										class="mt-1 w-28 rounded border px-2 py-1"
+										bind:value={scoreRobin}
+										placeholder="Team Robin"
+									/>
+								</div>
+							</div>
+
+							<Button
+								color="blue"
+								onclick={() => endGame('A', Number(scoreAmine), Number(scoreRobin))}
+								disabled={scoreAmine === '' || scoreAmine === undefined || scoreAmine === null}
+							>
+								🏆 {match.teamAmineSide[0]?.teamName || 'Team Amine'}
+							</Button>
+							<div class="mb-2 ml-2 text-xs text-gray-500">
+								{#each match.teamAmineSide as entry, i}
+									{entry.player.name}{i < match.teamAmineSide.length - 1 ? ', ' : ''}
+								{/each}
+							</div>
+
+							<Button
+								color="red"
+								onclick={() => endGame('B', Number(scoreAmine), Number(scoreRobin))}
+								disabled={scoreRobin === '' || scoreRobin === undefined || scoreRobin === null}
+							>
 								🏆 {match.teamRobinSide[0]?.teamName || 'Team Robin'}
 							</Button>
 							<div class="mb-2 ml-2 text-xs text-gray-500">

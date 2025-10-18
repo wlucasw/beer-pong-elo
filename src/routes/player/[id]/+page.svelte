@@ -29,7 +29,7 @@
 	{#if loading}
 		<p>Loading...</p>
 	{:else}
-		<h1 class="text-2xl font-bold">{player.name} 🏅</h1>
+		<h1 class="text-2xl font-bold">{player.name} {player.name === 'Amine' ? '👑' : ''}</h1>
 
 		<!-- Player info -->
 		<Card class="w-full max-w-lg text-center">

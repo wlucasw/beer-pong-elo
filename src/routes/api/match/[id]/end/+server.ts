@@ -34,7 +34,7 @@ function calculateElo(
 
 export async function POST({ params, request }) {
 	const matchId = Number(params.id);
-	const { winner } = await request.json(); // winner = 'A' | 'B'
+	const { winner, teamARemainingCups, teamBRemainingCups } = await request.json(); // winner = 'A' | 'B'
 
 	if (!winner || !['A', 'B'].includes(winner)) {
 		return json({ error: 'Invalid winner specified' }, { status: 400 });
@@ -71,8 +71,13 @@ export async function POST({ params, request }) {
 	const shotWithHitTeamB = shots.filter((shot) => shot.hit && shot.team === 'B');
 	const shotWithBounceTeamA = shots.filter((shot) => shot.bounceCup && shot.team === 'A');
 	const shotWithBounceTeamB = shots.filter((shot) => shot.bounceCup && shot.team === 'B');
-	const teamBRemainingCups = 10 - shotWithHitTeamA.length - shotWithBounceTeamA.length;
-	const teamARemainingCups = 10 - shotWithHitTeamB.length - shotWithBounceTeamB.length;
+	const teamBRemainingCupsFromDB = 10 - shotWithHitTeamA.length - shotWithBounceTeamA.length;
+	const teamARemainingCupsFromDB = 10 - shotWithHitTeamB.length - shotWithBounceTeamB.length;
+
+	const teamARemainingCupsFinal =
+		teamARemainingCups !== undefined ? teamARemainingCups : teamARemainingCupsFromDB;
+	const teamBRemainingCupsFinal =
+		teamBRemainingCups !== undefined ? teamBRemainingCups : teamBRemainingCupsFromDB;
 
 	// Update Elo for players
 	const teamAScore = winner === 'A' ? 1 : 0;
@@ -82,13 +87,13 @@ export async function POST({ params, request }) {
 		for (const playerB of match.teamRobinSide) {
 			const newEloA = calculateElo(playerA.player.elo, playerB.player.elo, {
 				didWin: teamAScore === 1,
-				playerCupsRemaining: teamARemainingCups,
-				opponentCupsRemaining: teamBRemainingCups
+				playerCupsRemaining: teamARemainingCupsFinal,
+				opponentCupsRemaining: teamBRemainingCupsFinal
 			});
 			const newEloB = calculateElo(playerB.player.elo, playerA.player.elo, {
 				didWin: teamBScore === 1,
-				playerCupsRemaining: teamBRemainingCups,
-				opponentCupsRemaining: teamARemainingCups
+				playerCupsRemaining: teamBRemainingCupsFinal,
+				opponentCupsRemaining: teamARemainingCupsFinal
 			});
 
 			await prisma.player.update({
