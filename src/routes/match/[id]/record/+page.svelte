@@ -19,7 +19,7 @@
 		sequence: number;
 	}[] = [];
 
-	const cups = [[1], [2, 3], [4, 5, 6], [7, 8, 9, 10]];
+	const cups = [[1], [3, 2], [6, 5, 4], [10, 9, 8, 7]];
 
 	$: scoreAmine = '';
 	$: scoreRobin = '';
