@@ -14,6 +14,7 @@
 		cup: number;
 		bounceCup?: number;
 		sequence: number;
+		team?: string;
 	}[] = [];
 
 	// Get unique players
@@ -31,33 +32,31 @@
 	});
 </script>
 
-<!-- Import Flowbite Svelte Table components -->
-
-<Table>
+<Table class="text-xs">
 	<TableHead>
-		<TableHeadCell>Player</TableHeadCell>
+		<TableHeadCell class="px-2 py-0.5 text-xs">Player</TableHeadCell>
 		{#each Array(maxSequence) as _, idx}
-			<TableHeadCell>{idx + 1}</TableHeadCell>
+			<TableHeadCell class="px-1 py-0.5 text-xs">{idx + 1}</TableHeadCell>
 		{/each}
 	</TableHead>
 	<TableBody>
 		{#each Array.from(new Set(shots.map((s) => s.team))) as team}
-			<!-- Team Row -->
-			<TableBodyRow style="height: 0.5rem;">
+			<TableBodyRow style="height: 0.75rem;">
 				<TableBodyCell
 					colspan={maxSequence + 1}
-					class="bg-black p-1 leading-tight font-bold text-white"
-					style="height: 0.5rem;"
+					class="bg-black px-1 py-0.5 text-xs leading-tight font-bold text-white"
+					style="height: 0.75rem;"
 				>
 					{team}
 				</TableBodyCell>
 			</TableBodyRow>
-			{#each players.filter( (player) => shots.find((s) => s.player === player && s.team === team) ) as player, rowIdx}
+
+			{#each players.filter( (player) => shots.find((s) => s.player === player && s.team === team) ) as player}
 				<TableBodyRow>
-					<TableBodyCell class="font-semibold">{player}</TableBodyCell>
+					<TableBodyCell class="px-2 py-0.5 text-xs font-semibold">{player}</TableBodyCell>
 					{#each grid[players.indexOf(player)] as cell}
 						<TableBodyCell
-							class="h-6 w-6 p-1 text-center"
+							class="h-4 w-6 p-0.5 text-center text-xs"
 							style="background-color: {cell === null ? '#fff' : cell.hit ? '#4ade80' : '#f87171'}"
 						>
 							{#if cell === null}{:else if cell.hit}
