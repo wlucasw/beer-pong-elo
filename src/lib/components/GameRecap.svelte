@@ -66,7 +66,9 @@
 								{#if cell.cup}
 									{cell.cup}
 								{/if}
-							{:else}{/if}
+							{:else}
+								X
+							{/if}
 						</TableBodyCell>
 					{/each}
 				</TableBodyRow>
