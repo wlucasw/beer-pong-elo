@@ -380,8 +380,8 @@
 
 		<!-- Live shot history -->
 		{#if shots.length}
-			<div class="overflow-x-auto" style="max-width: 90vw;">
-				<div class="min-w-max">
+			<div class="overflow-x-auto" style="max-width: 90vw; direction: rtl;">
+				<div class="min-w-max" style="direction: ltr;">
 					<GameRecap {shots} />
 				</div>
 			</div>
