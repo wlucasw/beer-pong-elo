@@ -29,7 +29,7 @@ function calculateElo(
 	//   - If fewer → closer to 0
 	const margin = Math.abs(playerCupsRemaining - opponentCupsRemaining) / 10;
 
-	return Math.round(playerElo + k * (outcome - expected) * (0.2 + 0.8 * margin));
+	return Math.round(k * (outcome - expected) * (0.6 + 0.4 * margin));
 }
 
 export async function POST({ params, request }) {
@@ -83,29 +83,33 @@ export async function POST({ params, request }) {
 	const teamAScore = winner === 'A' ? 1 : 0;
 	const teamBScore = winner === 'B' ? 1 : 0;
 
+	const TeamAElo =
+		match.teamAmineSide.reduce((sum, p) => sum + p.player.elo, 0) / match.teamAmineSide.length;
+	const TeamBElo =
+		match.teamRobinSide.reduce((sum, p) => sum + p.player.elo, 0) / match.teamRobinSide.length;
+
+	const eloVariationTeamA = calculateElo(TeamAElo, TeamBElo, {
+		didWin: teamAScore === 1,
+		playerCupsRemaining: teamARemainingCupsFinal,
+		opponentCupsRemaining: teamBRemainingCupsFinal
+	});
+
+	const eloVariationTeamB = calculateElo(TeamBElo, TeamAElo, {
+		didWin: teamBScore === 1,
+		playerCupsRemaining: teamBRemainingCupsFinal,
+		opponentCupsRemaining: teamARemainingCupsFinal
+	});
 	for (const playerA of match.teamAmineSide) {
-		for (const playerB of match.teamRobinSide) {
-			const newEloA = calculateElo(playerA.player.elo, playerB.player.elo, {
-				didWin: teamAScore === 1,
-				playerCupsRemaining: teamARemainingCupsFinal,
-				opponentCupsRemaining: teamBRemainingCupsFinal
-			});
-			const newEloB = calculateElo(playerB.player.elo, playerA.player.elo, {
-				didWin: teamBScore === 1,
-				playerCupsRemaining: teamBRemainingCupsFinal,
-				opponentCupsRemaining: teamARemainingCupsFinal
-			});
-
-			await prisma.player.update({
-				where: { id: playerA.playerId },
-				data: { elo: newEloA }
-			});
-
-			await prisma.player.update({
-				where: { id: playerB.playerId },
-				data: { elo: newEloB }
-			});
-		}
+		await prisma.player.update({
+			where: { id: playerA.playerId },
+			data: { elo: playerA.player.elo + eloVariationTeamA }
+		});
+	}
+	for (const playerB of match.teamRobinSide) {
+		await prisma.player.update({
+			where: { id: playerB.playerId },
+			data: { elo: playerB.player.elo + eloVariationTeamB }
+		});
 	}
 
 	return json({ message: 'Match ended successfully', winner });
