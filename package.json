@@ -12,7 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"start": "node build"
+		"start": "node build",
+		"backfill:elo": "node scripts/backfill-elo.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -44,8 +45,11 @@
 	},
 	"dependencies": {
 		"@prisma/client": "^6.15.0",
+		"apexcharts": "5.3.6",
+		"d3": "^7.9.0",
 		"lucide-svelte": "^0.542.0",
 		"pg": "^8.16.3",
+		"svelte-apexcharts": "1.0.2",
 		"tailwind-variants": "^3.1.0"
 	}
 }

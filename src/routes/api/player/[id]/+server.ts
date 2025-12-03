@@ -59,7 +59,8 @@ export const GET: RequestHandler = async ({ params }) => {
 				id: match.id,
 				createdAt: match.createdAt,
 				opponents,
-				won
+				won,
+				eloVariation: isOnTeamA ? match.eloVariationTeamA : match.eloVariationTeamB
 			};
 		});
 

@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import type { Prisma } from '@prisma/client';
 import prisma from '$lib/prisma';
 
 // Elo calculation with cups remaining
@@ -98,6 +99,14 @@ export async function POST({ params, request }) {
 		didWin: teamBScore === 1,
 		playerCupsRemaining: teamBRemainingCupsFinal,
 		opponentCupsRemaining: teamARemainingCupsFinal
+	});
+	// Save elo variations on the match
+	await prisma.match.update({
+		where: { id: matchId },
+		data: {
+			eloVariationTeamA,
+			eloVariationTeamB
+		} as unknown as Prisma.MatchUpdateInput
 	});
 	for (const playerA of match.teamAmineSide) {
 		await prisma.player.update({
