@@ -13,6 +13,8 @@
 	} from 'flowbite-svelte';
 	import type { Player } from '../../../domain/Player';
 	import EloVariationChart from '$lib/components/EloVariationChart.svelte';
+	import PlayerMatchup from '$lib/components/PlayerMatchup.svelte';
+	import PartnerMatchup from '$lib/components/PartnerMatchup.svelte';
 	type PlayerWithStats = Player & {
 		matchesPlayed: number;
 		wins: number;
@@ -88,22 +90,30 @@
 			{#if player.recentMatches.length > 0}
 				<EloVariationChart matches={player.recentMatches} {xMode} />
 			{:else}
-				<p class="text-sm text-gray-500">No data to display yet.</p>
+				<p class="text-sm text-gray-500">Aucune donnée à afficher.</p>
 			{/if}
 		</Card>
 
+		<div class="w-full max-w-3xl">
+			<PlayerMatchup playerId={Number(params.id)} />
+		</div>
+
+		<div class="w-full max-w-3xl">
+			<PartnerMatchup playerId={Number(params.id)} />
+		</div>
+
 		<!-- Recent matches -->
-		<Card class="w-full max-w-3xl">
-			<h2 class="mb-3 text-lg font-semibold">🕹️ Recent Matches</h2>
+		<Card class="mx-auto w-full max-w-3xl p-4">
+			<h2 class="mb-3 text-lg font-semibold">🕹️ Parties récentes</h2>
 			{#if player.recentMatches.length === 0}
-				<p class="text-sm text-gray-500">No matches yet.</p>
+				<p class="text-sm text-gray-500">Aucune partie trouvée.</p>
 			{:else}
 				<Table>
 					<TableHead>
-						<TableHeadCell>Date</TableHeadCell>
-						<TableHeadCell>Opponent(s)</TableHeadCell>
-						<TableHeadCell>Result</TableHeadCell>
-						<TableHeadCell>Elo Change</TableHeadCell>
+						<TableHeadCell>Date de la partie</TableHeadCell>
+						<TableHeadCell>Adversaire(s)</TableHeadCell>
+						<TableHeadCell>Résultat</TableHeadCell>
+						<TableHeadCell>Variation d'Elo</TableHeadCell>
 					</TableHead>
 					<TableBody>
 						{#each player.recentMatches as match}
@@ -116,9 +126,9 @@
 								</TableBodyCell>
 								<TableBodyCell>
 									{#if match.won}
-										<Badge color="green">Win</Badge>
+										<Badge color="green">Victoire</Badge>
 									{:else}
-										<Badge color="red">Loss</Badge>
+										<Badge color="red">Défaite</Badge>
 									{/if}
 								</TableBodyCell>
 								<TableBodyCell>
