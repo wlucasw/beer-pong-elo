@@ -13,7 +13,8 @@
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
 		"start": "node build",
-		"backfill:elo": "node scripts/backfill-elo.js"
+		"backfill:elo": "node scripts/backfill-elo.js",
+		"delete:ongoing": "node scripts/delete-ongoing.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
