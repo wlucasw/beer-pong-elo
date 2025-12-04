@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
-		Card,
 		Badge,
 		Table,
 		TableHead,
@@ -9,12 +8,14 @@
 		TableBody,
 		TableBodyRow,
 		TableBodyCell,
-		Toggle
+		Toggle,
+		Card
 	} from 'flowbite-svelte';
 	import type { Player } from '../../../domain/Player';
 	import EloVariationChart from '$lib/components/EloVariationChart.svelte';
 	import PlayerMatchup from '$lib/components/PlayerMatchup.svelte';
 	import PartnerMatchup from '$lib/components/PartnerMatchup.svelte';
+	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
 	type PlayerWithStats = Player & {
 		matchesPlayed: number;
 		wins: number;
@@ -81,9 +82,8 @@
 		</Card>
 
 		<!-- Elo variation chart -->
-		<Card class="w-full max-w-3xl p-4">
-			<h2 class="mb-3 text-lg font-semibold">📈 Elo over time</h2>
-			<div class="mb-2 flex items-center gap-3">
+		<CollapsibleCard title="📈 Elo over time" className="w-full max-w-3xl p-4">
+			<div slot="actions" class="flex items-center gap-3">
 				<p class="text-sm text-gray-600">Afficher les parties par date</p>
 				<Toggle color="blue" bind:checked={byDate} />
 			</div>
@@ -92,7 +92,7 @@
 			{:else}
 				<p class="text-sm text-gray-500">Aucune donnée à afficher.</p>
 			{/if}
-		</Card>
+		</CollapsibleCard>
 
 		<div class="w-full max-w-3xl">
 			<PlayerMatchup playerId={Number(params.id)} />
@@ -103,8 +103,7 @@
 		</div>
 
 		<!-- Recent matches -->
-		<Card class="mx-auto w-full max-w-3xl p-4">
-			<h2 class="mb-3 text-lg font-semibold">🕹️ Parties récentes</h2>
+		<CollapsibleCard title="🕹️ Parties récentes" className="mx-auto w-full max-w-3xl p-4">
 			{#if player.recentMatches.length === 0}
 				<p class="text-sm text-gray-500">Aucune partie trouvée.</p>
 			{:else}
@@ -139,6 +138,6 @@
 					</TableBody>
 				</Table>
 			{/if}
-		</Card>
+		</CollapsibleCard>
 	{/if}
 </main>
