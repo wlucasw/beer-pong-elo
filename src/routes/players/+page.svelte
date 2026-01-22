@@ -5,7 +5,8 @@
 		TableBody,
 		TableHeadCell,
 		TableBodyCell,
-		TableBodyRow
+		TableBodyRow,
+		Toggle
 	} from 'flowbite-svelte';
 	import { Button, Input, Card } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
@@ -13,6 +14,8 @@
 
 	let players: Player[] = [];
 	let newPlayerName = '';
+	$: showAllPlayers = false;
+	const whiteListedPlayers = ['Robin', 'Amine', 'Lucas', 'Sandro', 'Richard', 'Ken', 'MJ', 'Aurélien', 'Pauline'];
 
 	onMount(async () => {
 		const res = await fetch('/api/player');
@@ -50,6 +53,7 @@
 
 <main class="flex flex-col items-center space-y-6 p-6">
 	<h1 class="text-2xl font-bold">🏆 Leaderboard</h1>
+	<Toggle color="blue" bind:checked={showAllPlayers} />
 
 	<Card class="w-full max-w-2xl">
 		<Table>
@@ -60,6 +64,7 @@
 			</TableHead>
 			<TableBody>
 				{#each players as player, idx}
+				{#if showAllPlayers || whiteListedPlayers.includes(player.name)}
 					<TableBodyRow
 						class={rowClass(idx)}
 						onclick={() => (window.location.href = `/player/${player.id}`)}
@@ -69,6 +74,7 @@
 						<TableBodyCell>{player.name}</TableBodyCell>
 						<TableBodyCell class="text-right">{player.elo}</TableBodyCell>
 					</TableBodyRow>
+					{/if}
 				{/each}
 			</TableBody>
 		</Table>
