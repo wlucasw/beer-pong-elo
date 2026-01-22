@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Input, Card, MultiSelect } from 'flowbite-svelte';
+	import { Button, Input, Card, MultiSelect, Toggle } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import type { Player } from '../../../domain/Player';
 	import { goto } from '$app/navigation';
@@ -9,6 +9,9 @@
 	let ballNumber: number | '' = '';
 	let players: Player[] = [];
 	let playerOptions: { value: string; name: string }[] = [];
+	let showAllPlayers = false;
+	const whiteListedPlayers = ['Robin', 'Amine', 'Lucas', 'Sandro', 'Richard', 'Ken', 'MJ', 'Aurélien', 'Pauline'];
+	let filteredPlayerOptions: { value: string; name: string }[] = [];
 
 	onMount(async () => {
 		const res = await fetch('/api/player');
@@ -19,10 +22,11 @@
 		}));
 	});
 
+	$: filteredPlayerOptions = showAllPlayers
+		? playerOptions
+		: playerOptions.filter((opt) => whiteListedPlayers.includes(opt.name));
+
 	async function handleSubmit() {
-		console.log('teamAmine:', teamAmine);
-		console.log('teamRobin:', teamRobin);
-		console.log('ballNumber:', ballNumber);
 		const res = await fetch('/api/match', {
 			method: 'POST',
 			headers: {
@@ -49,15 +53,16 @@
 <main class="flex justify-center p-6">
 	<Card class="w-full max-w-none space-y-4 p-6">
 		<h2 class="text-center text-xl font-bold">🎯 Match Setup</h2>
+		<Toggle color="blue" bind:checked={showAllPlayers} />
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<MultiSelect
-				items={playerOptions}
+				items={filteredPlayerOptions}
 				bind:value={teamAmine}
 				size="lg"
 				placeholder="Team Amine side"
 			/>
 			<MultiSelect
-				items={playerOptions}
+				items={filteredPlayerOptions}
 				bind:value={teamRobin}
 				size="lg"
 				placeholder="Team Robin side"
