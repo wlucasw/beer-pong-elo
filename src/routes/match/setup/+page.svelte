@@ -10,7 +10,7 @@
 	let players: Player[] = [];
 	let playerOptions: { value: string; name: string }[] = [];
 	let showAllPlayers = false;
-	const whiteListedPlayers = ['Robin', 'Amine', 'Lucas', 'Sandro', 'Richard', 'Ken', 'MJ', 'Aurélien', 'Pauline'];
+	const whiteListedPlayers = ['Robin', 'Amine', 'Lucas', 'Sandro', 'Richard', 'Ken', 'MJ', 'Aurélien', 'Pauline', "Romain", "Noë"];
 	let filteredPlayerOptions: { value: string; name: string }[] = [];
 
 	onMount(async () => {
