@@ -15,11 +15,15 @@
 	let players: Player[] = [];
 	let newPlayerName = '';
 	$: showAllPlayers = false;
-	const whiteListedPlayers = ['Robin', 'Amine', 'Lucas', 'Sandro', 'Richard', 'Ken', 'MJ', 'Aurélien', 'Pauline', "Romain", "Noë"];
+	let whiteListedPlayers: string[] = [];
 
 	onMount(async () => {
-		const res = await fetch('/api/player');
-		players = await res.json();
+		const [playersRes, whitelistRes] = await Promise.all([
+			fetch('/api/player'),
+			fetch('/api/player/whitelist')
+		]);
+		players = await playersRes.json();
+		whiteListedPlayers = (await whitelistRes.json()) ?? [];
 		sortPlayers();
 	});
 

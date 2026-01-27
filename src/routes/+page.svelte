@@ -1,7 +1,7 @@
 <script>
 	import { Card, Spinner } from 'flowbite-svelte';
 	import { Button } from 'flowbite-svelte';
-	import { CirclePlay, Trophy, History } from 'lucide-svelte';
+	import { CirclePlay, Trophy, History, Settings } from 'lucide-svelte';
 	let loading = false;
 
 	let leaderboard = [
@@ -14,7 +14,7 @@
 <main class="space-y-10 p-6">
 	<!-- Quick Actions -->
 	<section>
-		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-4">
 			<Card
 				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
 			>
@@ -61,6 +61,31 @@
 						</span>
 					{:else}
 						Voir
+					{/if}
+				</Button>
+			</Card>
+
+			<Card
+				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
+			>
+				<Settings class="mb-3 h-12 w-12 text-purple-600" />
+				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Liste blanche</h5>
+				<Button
+					color="purple"
+					class="rounded-full px-6"
+					disabled={loading}
+					onclick={() => {
+						loading = true;
+						window.location.href = '/whitelist';
+					}}
+				>
+					{#if loading}
+						<span class="flex items-center">
+							<Spinner class="me-3" size="4" color="gray" />
+							Loading...
+						</span>
+					{:else}
+						Configurer
 					{/if}
 				</Button>
 			</Card>
