@@ -55,7 +55,10 @@
 <main class="flex justify-center p-6">
 	<Card class="w-full max-w-none space-y-4 p-6">
 		<h2 class="text-center text-xl font-bold">🎯 Match Setup</h2>
-		<Toggle color="blue" bind:checked={showAllPlayers} />
+        <div class="space-y-3 flex row items-center">
+            <label for="show-all-players" class="m-0 text-sm font-medium text-gray-700">Afficher tous les joueurs</label>
+            <Toggle id="show-all-players" color="blue" class="ml-2 center-self" bind:checked={showAllPlayers} />
+        </div>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<MultiSelect
 				items={filteredPlayerOptions}

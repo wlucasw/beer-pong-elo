@@ -10,7 +10,7 @@
 	} from 'flowbite-svelte';
 	import { Button, Input, Card } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '../domain/Player';
+	import type { Player } from '$../../../domain/Player';
 
 	let players: Player[] = [];
 	let newPlayerName = '';
@@ -57,7 +57,10 @@
 
 <main class="flex flex-col items-center space-y-6 p-6">
 	<h1 class="text-2xl font-bold">🏆 Leaderboard</h1>
-	<Toggle color="blue" bind:checked={showAllPlayers} />
+    <div class="space-y-3 flex row items-center">
+        <label for="show-all-players" class="m-0 text-sm font-medium text-gray-700">Afficher tous les joueurs</label>
+        <Toggle id="show-all-players" color="blue" class="ml-2 center-self" bind:checked={showAllPlayers} />
+    </div>
 
 	<Card class="w-full max-w-2xl">
 		<Table>

@@ -65,7 +65,7 @@
 				class="flex flex-col items-center rounded-2xl p-6 text-center shadow-lg transition hover:shadow-xl"
 			>
 				<Settings class="mb-3 h-12 w-12 text-purple-600" />
-				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Liste blanche</h5>
+				<h5 class="mb-2 text-xl font-bold tracking-tight text-gray-900">Liste de soirée</h5>
 				<Button
 					color="purple"
 					class="rounded-full px-6"

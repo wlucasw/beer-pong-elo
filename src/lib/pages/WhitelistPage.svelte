@@ -12,7 +12,7 @@
 		Input
 	} from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '../domain/Player';
+	import type { Player } from '$../../../domain/Player';
 
 	let loading = true;
 	let saving = false;
@@ -32,7 +32,7 @@
 			const wl: string[] = await whitelistRes.json();
 			whitelistedNames = new Set(wl ?? []);
 		} catch (e) {
-			error = 'Impossible de charger la liste blanche';
+			error = 'Impossible de charger la liste de soirée';
 		} finally {
 			loading = false;
 		}
@@ -66,7 +66,7 @@
 			if (!res.ok) {
 				error = 'Échec de l’enregistrement';
 			} else {
-				success = 'Liste blanche enregistrée';
+				success = 'Liste de soirée enregistrée';
 			}
 		} catch (e) {
 			error = 'Erreur réseau';
@@ -78,7 +78,7 @@
 
 <main class="p-6">
 	<Card class="mx-auto w-full max-w-2xl space-y-4 p-6">
-		<h2 class="text-center text-xl font-bold">⚙️ Liste blanche des joueurs</h2>
+		<h2 class="text-center text-xl font-bold">⚙️ Liste de soirée</h2>
 
 		{#if loading}
 			<div class="flex justify-center py-8">
