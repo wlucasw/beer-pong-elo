@@ -11,11 +11,12 @@
 		Toggle,
 		Card
 	} from 'flowbite-svelte';
-	import type { Player } from '../domain/Player';
+	import type { Player } from '$../../../domain/Player';
 	import EloVariationChart from '$lib/components/EloVariationChart.svelte';
 	import PlayerMatchup from '$lib/components/PlayerMatchup.svelte';
 	import PartnerMatchup from '$lib/components/PartnerMatchup.svelte';
 	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
+	import { navigate } from '$lib/router';
 
 	export let params: { id?: string } = {};
 	let player: (Player & {
@@ -116,7 +117,9 @@
 					</TableHead>
 					<TableBody>
 						{#each player.recentMatches as match}
-							<TableBodyRow>
+							<TableBodyRow onclick={() => {
+								navigate(`/match/${match.id}/recap`);
+							}} style="cursor:pointer;">
 								<TableBodyCell>
 									{new Date(match.createdAt).toLocaleDateString()}
 								</TableBodyCell>
