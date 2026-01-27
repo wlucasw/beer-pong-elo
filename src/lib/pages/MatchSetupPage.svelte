@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Button, Input, Card, MultiSelect, Toggle } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '../../../domain/Player';
-	import { goto } from '$app/navigation';
+	import type { Player } from '$../../../domain/Player';
+	import { navigate } from '$lib/router';
 
 	let teamAmine: string[] = [];
 	let teamRobin: string[] = [];
@@ -45,9 +45,7 @@
 
 		if (res.ok) {
 			const match = await res.json();
-			console.log('Match saved ✅', match);
-
-			goto(`/match/${match.id}/record`);
+			navigate(`/match/${match.id}/record`);
 		} else {
 			console.error('Failed to save match ❌');
 		}
@@ -82,3 +80,5 @@
 		<Button type="submit" class="w-full" onclick={handleSubmit}>Valider</Button>
 	</Card>
 </main>
+
+

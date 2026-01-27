@@ -10,7 +10,7 @@
 	} from 'flowbite-svelte';
 	import { Button, Input, Card } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '../../domain/Player';
+	import type { Player } from '../domain/Player';
 
 	let players: Player[] = [];
 	let newPlayerName = '';
@@ -48,9 +48,9 @@
 	}
 
 	function rowClass(idx: number) {
-		if (idx === 0) return 'bg-yellow-200 font-bold'; // Gold
-		if (idx === 1) return 'bg-gray-200 font-semibold'; // Silver
-		if (idx === 2) return 'bg-amber-700/30 font-medium'; // Bronze
+		if (idx === 0) return 'bg-yellow-200 font-bold';
+		if (idx === 1) return 'bg-gray-200 font-semibold';
+		if (idx === 2) return 'bg-amber-700/30 font-medium';
 		return '';
 	}
 </script>
@@ -71,7 +71,10 @@
 				{#if showAllPlayers || whiteListedPlayers.includes(player.name)}
 					<TableBodyRow
 						class={rowClass(idx)}
-						onclick={() => (window.location.href = `/player/${player.id}`)}
+						onclick={() => {
+							window.history.pushState({}, '', `/player/${player.id}`);
+							window.dispatchEvent(new PopStateEvent('popstate'));
+						}}
 						style="cursor:pointer;"
 					>
 						<TableBodyCell class="text-center font-semibold">{idx + 1}</TableBodyCell>
@@ -94,4 +97,6 @@
 		/>
 		<Button onclick={addPlayer} class="whitespace-nowrap">+ Add Player</Button>
 	</div>
-</main>
+	</main>
+
+

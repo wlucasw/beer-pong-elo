@@ -3,12 +3,6 @@
 	import { Button } from 'flowbite-svelte';
 	import { CirclePlay, Trophy, History, Settings } from 'lucide-svelte';
 	let loading = false;
-
-	let leaderboard = [
-		{ name: 'Alice', elo: 1520 },
-		{ name: 'Bob', elo: 1480 },
-		{ name: 'Charlie', elo: 1450 }
-	];
 </script>
 
 <main class="space-y-10 p-6">
@@ -26,7 +20,8 @@
 					disabled={loading}
 					onclick={() => {
 						loading = true;
-						window.location.href = '/match/setup';
+						window.history.pushState({}, '', '/match/setup');
+						window.dispatchEvent(new PopStateEvent('popstate'));
 					}}
 				>
 					{#if loading}
@@ -51,7 +46,8 @@
 					disabled={loading}
 					onclick={() => {
 						loading = true;
-						window.location.href = '/players';
+						window.history.pushState({}, '', '/players');
+						window.dispatchEvent(new PopStateEvent('popstate'));
 					}}
 				>
 					{#if loading}
@@ -76,7 +72,8 @@
 					disabled={loading}
 					onclick={() => {
 						loading = true;
-						window.location.href = '/whitelist';
+						window.history.pushState({}, '', '/whitelist');
+						window.dispatchEvent(new PopStateEvent('popstate'));
 					}}
 				>
 					{#if loading}
@@ -101,7 +98,8 @@
 					disabled={loading}
 					onclick={() => {
 						loading = true;
-						window.location.href = '/history';
+						window.history.pushState({}, '', '/history');
+						window.dispatchEvent(new PopStateEvent('popstate'));
 					}}
 				>
 					{#if loading}
@@ -117,3 +115,5 @@
 		</div>
 	</section>
 </main>
+
+

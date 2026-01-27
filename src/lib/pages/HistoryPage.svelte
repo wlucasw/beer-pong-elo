@@ -1,27 +1,53 @@
 <script lang="ts">
-	import { Card } from 'flowbite-svelte';
-	import { Badge } from 'flowbite-svelte';
-	export let data;
+	import { onMount } from 'svelte';
+	import { Card, Badge } from 'flowbite-svelte';
+
+	type PlayerLite = { name: string; elo: number };
+	type TeamEntry = { player: PlayerLite };
+	type MatchLite = {
+		id: number;
+		createdAt: string;
+		teamAmineSide: TeamEntry[];
+		teamRobinSide: TeamEntry[];
+		winnerA: boolean;
+		winnerB: boolean;
+	};
+
+	let matches: MatchLite[] = [];
+	let loading = true;
+
+	onMount(async () => {
+		const res = await fetch('/api/match?finished=1');
+		if (res.ok) {
+			matches = await res.json();
+		} else {
+			matches = [];
+		}
+		loading = false;
+	});
 </script>
 
 <main class="flex flex-col items-center space-y-6 p-6">
 	<h1 class="text-2xl font-bold">📜 Match History</h1>
 
-	{#if data.matches.length === 0}
+	{#if loading}
+		<p class="text-gray-500">Loading...</p>
+	{:else if matches.length === 0}
 		<p class="text-gray-500">No matches recorded yet.</p>
 	{:else}
 		<div class="flex w-full flex-col items-center space-y-6">
-			{#each data.matches as match}
+			{#each matches as match}
 				<Card
 					class="w-full max-w-xl cursor-pointer p-4"
-					onclick={() => (window.location.href = `/match/${match.id}/recap`)}
+					onclick={() => {
+						window.history.pushState({}, '', `/match/${match.id}/recap`);
+						window.dispatchEvent(new PopStateEvent('popstate'));
+					}}
 				>
-					<!-- Match date -->
 					<p class="text-sm text-gray-400">
 						{new Date(match.createdAt).toLocaleString()}
 					</p>
 
-					<!-- Teams -->
 					<div class="mt-3 grid grid-cols-2 gap-6">
 						<div class="text-center">
 							<h3 class="mb-1 font-semibold text-blue-600">Team Amine</h3>
@@ -48,7 +74,6 @@
 						</div>
 					</div>
 
-					<!-- Result -->
 					<div class="mt-4 text-center font-bold">
 						{#if match.winnerA}
 							<Badge color="blue" size="lg" class="px-4 py-1">🏆 Team Amine won!</Badge>
@@ -63,3 +88,5 @@
 		</div>
 	{/if}
 </main>
+
+

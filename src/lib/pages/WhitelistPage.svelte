@@ -12,7 +12,7 @@
 		Input
 	} from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '../../domain/Player';
+	import type { Player } from '../domain/Player';
 
 	let loading = true;
 	let saving = false;

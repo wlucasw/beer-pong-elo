@@ -15,8 +15,9 @@
 	{#each cups as row}
 		<div class="flex justify-center space-x-2">
 			{#each row as cup}
-				<div
-					class="flex cursor-pointer items-center justify-center rounded-full border-2
+				<button
+					type="button"
+					class="flex items-center justify-center rounded-full border-2
     {selectedCups.includes(cup)
 						? 'border-yellow-600 bg-yellow-400'
 						: isHit(cup)
@@ -26,7 +27,7 @@
 					onclick={() => handleClick(cup)}
 				>
 					{cup}
-				</div>
+				</button>
 			{/each}
 		</div>
 	{/each}

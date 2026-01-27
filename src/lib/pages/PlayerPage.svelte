@@ -11,12 +11,14 @@
 		Toggle,
 		Card
 	} from 'flowbite-svelte';
-	import type { Player } from '../../../domain/Player';
+	import type { Player } from '../domain/Player';
 	import EloVariationChart from '$lib/components/EloVariationChart.svelte';
 	import PlayerMatchup from '$lib/components/PlayerMatchup.svelte';
 	import PartnerMatchup from '$lib/components/PartnerMatchup.svelte';
 	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
-	type PlayerWithStats = Player & {
+
+	export let params: { id?: string } = {};
+	let player: (Player & {
 		matchesPlayed: number;
 		wins: number;
 		losses: number;
@@ -29,21 +31,19 @@
 			won: boolean;
 			eloVariation: number;
 		}>;
-	};
-
-	export let params;
-	let player: PlayerWithStats | null = null;
+	}) | null = null;
 	$: loading = true;
 	let byDate = false;
 	let xMode: 'index' | 'date' = 'index';
 	$: xMode = byDate ? 'date' : 'index';
 
-	onMount(async () => {
-		// Fetch player info
-		const res = await fetch(`/api/player/${params.id}`);
-		player = await res.json();
+	const routeId = () => params?.id ?? (typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : undefined);
 
-		console.log(player);
+	onMount(async () => {
+		const id = routeId();
+		if (!id) return;
+		const res = await fetch(`/api/player/${id}`);
+		player = await res.json();
 		loading = false;
 	});
 </script>
@@ -95,11 +95,11 @@
 		</CollapsibleCard>
 
 		<div class="w-full max-w-3xl">
-			<PlayerMatchup playerId={Number(params.id)} />
+			<PlayerMatchup playerId={Number(routeId())} />
 		</div>
 
 		<div class="w-full max-w-3xl">
-			<PartnerMatchup playerId={Number(params.id)} />
+			<PartnerMatchup playerId={Number(routeId())} />
 		</div>
 
 		<!-- Recent matches -->
@@ -141,3 +141,5 @@
 		</CollapsibleCard>
 	{/if}
 </main>
+
+
