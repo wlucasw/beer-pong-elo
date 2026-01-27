@@ -76,7 +76,7 @@ async function computeOpponentsAccuracyDiff(playerId) {
 			if (!consideredShots || !opponentGlobalShots || consideredShots.total === 0 || opponentGlobalShots.total === 0) continue;
 			const accuracyConsidered = consideredShots.hits / consideredShots.total;
 			const accuracyGlobal = opponentGlobalShots.hits / opponentGlobalShots.total;
-			const accuracyDifference = accuracyGlobal - accuracyConsidered;
+			const accuracyDifference =  accuracyConsidered - accuracyGlobal;
 			accuracyDifferencesSum += accuracyDifference;
 			sumOfPseudoMatches += 1;
 		}
