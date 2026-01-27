@@ -25,6 +25,8 @@
 		losses: number;
 		winPercent: number;
 		accuracy: number;
+		bounceShotsPerGame: number;
+		opponentsAccuracyDiff: number;
 		recentMatches: Array<{
 			id: number;
 			createdAt: string;
@@ -43,8 +45,22 @@
 	onMount(async () => {
 		const id = routeId();
 		if (!id) return;
-		const res = await fetch(`/api/player/${id}`);
-		player = await res.json();
+		const [playerRes, statsRes] = await Promise.all([
+			fetch(`/api/player/${id}`),
+			fetch(`/api/player/${id}/statistics`)
+		]);
+		const base = await playerRes.json();
+		const stats = await statsRes.json();
+		player = {
+			...base,
+			matchesPlayed: stats.matchesPlayed,
+			wins: stats.wins,
+			losses: stats.losses,
+			winPercent: stats.winPercent,
+			accuracy: stats.accuracy,
+			bounceShotsPerGame: Math.round(stats.bounceShots / stats.matchesPlayed * 100) / 100,
+			opponentsAccuracyDiff: stats.opponentsAccuracyDiff
+		};
 		loading = false;
 	});
 </script>
@@ -59,7 +75,7 @@
 		</h1>
 
 		<!-- Player info -->
-		<Card class="w-full max-w-lg text-center">
+		<Card class="w-full max-w-lg text-center p-2">
 			<p class="text-lg font-semibold">
 				Elo:
 				<Badge color="blue" class="ml-2">{player.elo}</Badge>
@@ -79,6 +95,15 @@
 						{player.accuracy.toFixed(1)}%
 					</span>
 				</p>
+				<p style="color: {player.opponentsAccuracyDiff < 0 ? 'hsl(120, 70%, 40%)' : player.opponentsAccuracyDiff > 0 ? 'hsl(0, 75%, 50%)' : 'inherit'}">
+					Score de défense:
+					<span
+						class="font-semibold"
+					>
+						{player.opponentsAccuracyDiff.toFixed(2)}%
+					</span>
+				</p>
+				<p class="text-gray-600">Rebonds par game: <span class="font-semibold">{player.bounceShotsPerGame}</span></p>
 			</div>
 		</Card>
 

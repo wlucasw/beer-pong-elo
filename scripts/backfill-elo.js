@@ -14,6 +14,114 @@ function calculateElo(
 	return Math.round(k * (outcome - expected) * (0.6 + 0.4 * margin));
 }
 
+async function computeOpponentsAccuracyDiff(playerId) {
+	const matches = await prisma.match.findMany({
+		where: {
+			status: 'FINISHED',
+			OR: [{ teamAmineSide: { some: { playerId } } }, { teamRobinSide: { some: { playerId } } }]
+		},
+		include: {
+			teamAmineSide: true,
+			teamRobinSide: true
+		}
+	});
+	if (matches.length === 0) return 0;
+	const matchIds= [];
+	const opponentIdsSet = new Set();
+	for (const m of matches) {
+		matchIds.push(m.id);
+		const isOnA = m.teamAmineSide.some((t) => t.playerId === playerId);
+		const opponents = isOnA ? m.teamRobinSide : m.teamAmineSide;
+		for (const o of opponents) opponentIdsSet.add(o.playerId);
+	}
+	const opponentIds = Array.from(opponentIdsSet);
+	if (opponentIds.length === 0) return 0;
+
+	const allOpponentsShots = await prisma.shot.findMany({
+		where: { playerId: { in: opponentIds } },
+		select: { playerId: true, hit: true }
+	});
+	const allOpponentsAccuracy = new Map();
+	for (const s of allOpponentsShots) {
+		const agg = allOpponentsAccuracy.get(s.playerId) ?? { hits: 0, total: 0 };
+		agg.total += 1;
+		if (s.hit) agg.hits += 1;
+		allOpponentsAccuracy.set(s.playerId, agg);
+	}
+
+	const shotOfOpponentVersusPlayer = await prisma.shot.findMany({
+		where: { matchId: { in: matchIds }, playerId: { in: opponentIds } },
+		select: { playerId: true, hit: true, matchId: true }
+	});
+
+	const allMatchPlayedIds = shotOfOpponentVersusPlayer.map((s) => s.matchId);
+	const allMatchShotsAndHitsByOpponent = new Map();
+	for (const matchId of allMatchPlayedIds) {
+		const listOfShotsAndHitsByOpponent = allMatchShotsAndHitsByOpponent.get(matchId) ?? new Map();
+		for (const s of shotOfOpponentVersusPlayer) {
+			const agg = listOfShotsAndHitsByOpponent.get(s.playerId) ?? { hits: 0, total: 0 };
+			agg.total += 1;
+			if (s.hit) agg.hits += 1;
+			listOfShotsAndHitsByOpponent.set(s.playerId, agg);
+		}
+		allMatchShotsAndHitsByOpponent.set(matchId, listOfShotsAndHitsByOpponent);
+	}
+	
+	let accuracyDifferencesSum = 0;
+	let sumOfPseudoMatches = 0;
+	for (const matchId of allMatchPlayedIds) {
+		for (const oppId of opponentIds) {
+			const consideredShots = allMatchShotsAndHitsByOpponent.get(matchId)?.get(oppId) ?? { hits: 0, total: 0 };
+			const opponentGlobalShots = allOpponentsAccuracy.get(oppId);
+			if (!consideredShots || !opponentGlobalShots || consideredShots.total === 0 || opponentGlobalShots.total === 0) continue;
+			const accuracyConsidered = consideredShots.hits / consideredShots.total;
+			const accuracyGlobal = opponentGlobalShots.hits / opponentGlobalShots.total;
+			const accuracyDifference = accuracyGlobal - accuracyConsidered;
+			accuracyDifferencesSum += accuracyDifference;
+			sumOfPseudoMatches += 1;
+		}
+	}
+	return accuracyDifferencesSum === 0 ? 0 : accuracyDifferencesSum / sumOfPseudoMatches;
+}
+
+async function upsertPlayerStatistics(playerId) {
+	const [totalShots, hits, bounceShots, matchesPlayed, wins] = await Promise.all([
+		prisma.shot.count({ where: { playerId } }),
+		prisma.shot.count({ where: { playerId, hit: true } }),
+		prisma.shot.count({ where: { playerId, bounceCup: { not: null } } }),
+		prisma.match.count({
+			where: {
+				status: 'FINISHED',
+				OR: [{ teamAmineSide: { some: { playerId } } }, { teamRobinSide: { some: { playerId } } }]
+			}
+		}),
+		prisma.match.count({
+			where: {
+				status: 'FINISHED',
+				OR: [
+					{ AND: [{ teamAmineSide: { some: { playerId } } }, { winnerA: true }] },
+					{ AND: [{ teamRobinSide: { some: { playerId } } }, { winnerB: true }] }
+				]
+			}
+		})
+	]);
+	const losses = Math.max(0, matchesPlayed - wins);
+	const accuracy = totalShots === 0 ? 0 : hits / totalShots;
+	const opponentsAccuracyDiff = await computeOpponentsAccuracyDiff(playerId);
+
+	await prisma.$executeRaw`
+		INSERT INTO "Statistics" ("playerId","accuracy","matchesPlayed","wins","losses","bounceShots","opponentsAccuracyDiff")
+		VALUES (${playerId}, ${accuracy}, ${matchesPlayed}, ${wins}, ${losses}, ${bounceShots}, ${opponentsAccuracyDiff})
+		ON CONFLICT ("playerId") DO UPDATE SET
+			"accuracy" = EXCLUDED."accuracy",
+			"matchesPlayed" = EXCLUDED."matchesPlayed",
+			"wins" = EXCLUDED."wins",
+			"losses" = EXCLUDED."losses",
+			"bounceShots" = EXCLUDED."bounceShots",
+			"opponentsAccuracyDiff" = EXCLUDED."opponentsAccuracyDiff";
+	`;
+}
+
 async function main() {
 	console.log('Starting Elo backfill...');
 
@@ -100,7 +208,13 @@ async function main() {
 	}
 	await prisma.$transaction(updates);
 
-	console.log('Elo backfill complete.');
+	console.log('Elo backfill complete. Recomputing Statistics...');
+
+	// Recompute and upsert Statistics for all players
+	const allPlayers = await prisma.player.findMany({ select: { id: true } });
+	await Promise.all(allPlayers.map((p) => upsertPlayerStatistics(p.id)));
+
+	console.log('Statistics backfill complete.');
 }
 
 main()

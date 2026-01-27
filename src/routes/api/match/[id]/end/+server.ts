@@ -33,6 +33,51 @@ function calculateElo(
 	return Math.round(k * (outcome - expected) * (0.6 + 0.4 * margin));
 }
 
+async function upsertPlayerStatistics(playerId: number) {
+	// Aggregate global stats to keep a single source of truth
+	const [totalShots, hits, bounceShots, matchesPlayed, wins] = await Promise.all([
+		prisma.shot.count({ where: { playerId } }),
+		prisma.shot.count({ where: { playerId, hit: true } }),
+		prisma.shot.count({ where: { playerId, bounceCup: { not: null } } }),
+		prisma.match.count({
+			where: {
+				status: 'FINISHED',
+				OR: [{ teamAmineSide: { some: { playerId } } }, { teamRobinSide: { some: { playerId } } }]
+			}
+		}),
+		prisma.match.count({
+			where: {
+				status: 'FINISHED',
+				OR: [
+					{ AND: [{ teamAmineSide: { some: { playerId } } }, { winnerA: true }] },
+					{ AND: [{ teamRobinSide: { some: { playerId } } }, { winnerB: true }] }
+				]
+			}
+		})
+	]);
+	const losses = Math.max(0, matchesPlayed - wins);
+	const accuracy = totalShots === 0 ? 0 : hits / totalShots;
+
+	await prisma.statistics.upsert({
+		where: { playerId },
+		update: {
+			accuracy,
+			matchesPlayed,
+			wins,
+			losses,
+			bounceShots
+		},
+		create: {
+			playerId,
+			accuracy,
+			matchesPlayed,
+			wins,
+			losses,
+			bounceShots
+		}
+	});
+}
+
 export async function POST({ params, request }) {
 	const matchId = Number(params.id);
 	const { winner, teamARemainingCups, teamBRemainingCups } = await request.json(); // winner = 'A' | 'B'
@@ -120,6 +165,14 @@ export async function POST({ params, request }) {
 			data: { elo: playerB.player.elo + eloVariationTeamB }
 		});
 	}
+
+	// Compute and upsert Statistics for all players in this match
+	const playerIds = [
+		...match.teamAmineSide.map((p) => p.playerId),
+		...match.teamRobinSide.map((p) => p.playerId)
+	];
+	const uniquePlayerIds = Array.from(new Set(playerIds));
+	await Promise.all(uniquePlayerIds.map((pid) => upsertPlayerStatistics(pid)));
 
 	return json({ message: 'Match ended successfully', winner });
 }
