@@ -9,14 +9,7 @@
 		Badge
 	} from 'flowbite-svelte';
 	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
-	type MatchupRow = {
-		name: string;
-		games: number;
-		wins: number;
-		losses: number;
-		shotsHit: number;
-		shotsTotal: number;
-	};
+	import type { MatchupRow } from '$lib/types';
 
 	export let title: string;
 	export let nameHeader: string;

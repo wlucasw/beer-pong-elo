@@ -2,16 +2,11 @@
 	import { onMount } from 'svelte';
 	import { Card } from 'flowbite-svelte';
 	import GameRecap from '$lib/components/GameRecap.svelte';
+	import type { Shot } from '$lib/types';
 
 	export let params: { id?: string } = {};
 	let match: any = null;
-	let shots: {
-		player: string;
-		cup: number;
-		hit: boolean;
-		team: 'A' | 'B';
-		sequence: number;
-	}[] = [];
+	let shots: Shot[] = [];
 	let loading = true;
 
 	const routeId = () => params?.id ?? (typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : undefined);

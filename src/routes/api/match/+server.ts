@@ -1,5 +1,7 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import prisma from '$lib/prisma';
+import type { MatchFull } from '$lib/types';
 
 // GET /api/match?finished=1
 export const GET: RequestHandler = async ({ url }) => {
@@ -12,13 +14,11 @@ export const GET: RequestHandler = async ({ url }) => {
 				teamRobinSide: { include: { player: true } }
 			}
 		});
-		const data = finishedOnly
-			? matches.filter((m) => m.winnerA || m.winnerB)
-			: matches;
-		return new Response(JSON.stringify(data), { status: 200 });
+		const data = (finishedOnly ? matches.filter((m) => m.winnerA || m.winnerB) : matches) as unknown as MatchFull[];
+		return json(data);
 	} catch (err) {
 		console.error('Error fetching matches', err);
-		return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+		return json({ error: 'Internal Server Error' }, { status: 500 });
 	}
 };
 
@@ -28,13 +28,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		const { teamAmine, teamRobin, numberOfShotByMatch } = await request.json();
 
 		if (teamAmine.length === 0 || teamRobin.length === 0 || !numberOfShotByMatch) {
-			return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		// Create the match
 		const match = await prisma.match.create({
 			data: {
-				winnerA: false, // you can adjust later
+				winnerA: false,
 				winnerB: false,
 				teamAmineSide: {
 					create: teamAmine.map((id: string) => ({
@@ -54,9 +53,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		});
 
-		return new Response(JSON.stringify(match), { status: 201 });
+		return json(match as unknown as MatchFull, { status: 201 });
 	} catch (err) {
 		console.error('Error creating match', err);
-		return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+		return json({ error: 'Internal Server Error' }, { status: 500 });
 	}
 };

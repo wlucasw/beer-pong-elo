@@ -1,32 +1,27 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/prisma';
+import type { PlayerStats } from '$lib/types';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const playerId = Number(params.id);
 	if (Number.isNaN(playerId)) {
-		return new Response(JSON.stringify({ error: 'Invalid player id' }), { status: 400 });
+		return json({ error: 'Invalid player id' }, { status: 400 });
 	}
 
-	const stat = await prisma.statistics.findUnique({where:{playerId}});
+	const stat = await prisma.statistics.findUnique({ where: { playerId } });
 
 	if (stat) {
-		const matchesPlayed = stat.matchesPlayed;
-		const wins = stat.wins;
-		const losses = stat.losses;
-		const accuracy = stat.accuracy * 100;
-		const winPercent = matchesPlayed > 0 ? (wins / matchesPlayed) * 100 : 0;
-		return new Response(
-			JSON.stringify({
-				matchesPlayed,
-				wins,
-				losses,
-				winPercent,
-				accuracy,
-				bounceShots: stat.bounceShots,
-				opponentsAccuracyDiff: stat.opponentsAccuracyDiff != null ? stat.opponentsAccuracyDiff * 100 : 0
-			}),
-			{ status: 200 }
-		);
+		const response: PlayerStats = {
+			matchesPlayed: stat.matchesPlayed,
+			wins: stat.wins,
+			losses: stat.losses,
+			winPercent: stat.matchesPlayed > 0 ? (stat.wins / stat.matchesPlayed) * 100 : 0,
+			accuracy: stat.accuracy * 100,
+			bounceShots: stat.bounceShots,
+			opponentsAccuracyDiff: stat.opponentsAccuracyDiff != null ? stat.opponentsAccuracyDiff * 100 : 0
+		};
+		return json(response);
 	}
 
 	// Fallback compute if no statistics row exists yet
@@ -51,25 +46,16 @@ export const GET: RequestHandler = async ({ params }) => {
 		})
 	]);
 	const losses = Math.max(0, matchesPlayed - wins);
-	const accuracy = totalShots === 0 ? 0 : (hits / totalShots) * 100;
-	const winPercent = matchesPlayed > 0 ? (wins / matchesPlayed) * 100 : 0;
 
-	// Do not compute opponentsAccuracyDiff on the fly, it's too expensive
-	const opponentsAccuracyDiff = 0;
+	const response: PlayerStats = {
+		matchesPlayed,
+		wins,
+		losses,
+		winPercent: matchesPlayed > 0 ? (wins / matchesPlayed) * 100 : 0,
+		accuracy: totalShots === 0 ? 0 : (hits / totalShots) * 100,
+		bounceShots,
+		opponentsAccuracyDiff: 0
+	};
 
-
-	return new Response(
-		JSON.stringify({
-			matchesPlayed,
-			wins,
-			losses,
-			winPercent,
-			accuracy,
-			bounceShots,
-			opponentsAccuracyDiff
-		}),
-		{ status: 200 }
-	);
+	return json(response);
 };
-
-

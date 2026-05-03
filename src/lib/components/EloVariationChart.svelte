@@ -11,12 +11,7 @@
 		max,
 		format
 	} from 'd3';
-
-	type EloMatchPoint = {
-		createdAt: string;
-		eloVariation: number;
-	};
-	type SeriesPoint = { date: Date; elo: number };
+	import type { EloMatchPoint, SeriesPoint } from '$lib/types';
 
 	export let matches: EloMatchPoint[] = [];
 	export let startingElo: number = 1000;

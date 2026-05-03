@@ -1,11 +1,13 @@
-import prisma from '$lib/prisma';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
+import prisma from '$lib/prisma';
+import type { ShotRecap } from '$lib/types';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const matchId = params.id;
 
 	if (!matchId) {
-		return new Response(JSON.stringify({ error: 'Match ID is required' }), { status: 400 });
+		return json({ error: 'Match ID is required' }, { status: 400 });
 	}
 
 	try {
@@ -19,23 +21,19 @@ export const GET: RequestHandler = async ({ params }) => {
 			select: { id: true, name: true }
 		});
 		const playerMap = Object.fromEntries(players.map((p) => [p.id, p.name]));
-		const updatedShots = shots.map((shot) => {
-			return {
-				playerId: shot.playerId,
-				player: playerMap[shot.playerId] || null,
-				cup: shot.cup,
-				bounceCup: shot.bounceCup,
-				hit: shot.hit,
-				team: shot.team,
-				round: shot.round,
-				sequence: shot.sequence
-			};
-		});
+		const updatedShots: ShotRecap[] = shots.map((shot) => ({
+			playerId: shot.playerId,
+			player: playerMap[shot.playerId] ?? null,
+			cup: shot.cup,
+			bounceCup: shot.bounceCup,
+			hit: shot.hit,
+			team: shot.team,
+			round: shot.round,
+			sequence: shot.sequence
+		}));
 
-		return new Response(JSON.stringify(updatedShots), { status: 200 });
+		return json(updatedShots);
 	} catch (error) {
-		return new Response(JSON.stringify({ error: `Failed to fetch shots: ${error}` }), {
-			status: 500
-		});
+		return json({ error: `Failed to fetch shots: ${error}` }, { status: 500 });
 	}
 };

@@ -1,19 +1,7 @@
 import prisma from '$lib/prisma';
+import type { MatchupApiRow, MatchupResponse } from '$lib/types';
 
-export type MatchupStats = {
-	id: number;
-	name: string;
-	games: number;
-	wins: number;
-	losses: number;
-	shotsHit: number;
-	shotsTotal: number;
-};
-
-export async function computeMatchupsForPlayer(playerId: number): Promise<{
-	byOpponents: MatchupStats[];
-	byPartners: MatchupStats[];
-}> {
+export async function computeMatchupsForPlayer(playerId: number): Promise<MatchupResponse> {
 	const matches = await prisma.match.findMany({
 		where: {
 			OR: [{ teamAmineSide: { some: { playerId } } }, { teamRobinSide: { some: { playerId } } }]
@@ -48,8 +36,8 @@ export async function computeMatchupsForPlayer(playerId: number): Promise<{
 		myShotsByMatch.set(s.matchId, agg);
 	}
 
-	const byOpponentsMap = new Map<number, MatchupStats>();
-	const byPartnersMap = new Map<number, MatchupStats>();
+	const byOpponentsMap = new Map<number, MatchupApiRow>();
+	const byPartnersMap = new Map<number, MatchupApiRow>();
 
 	for (const m of matches) {
 		const teamA = m.teamAmineSide;
@@ -102,7 +90,7 @@ export async function computeMatchupsForPlayer(playerId: number): Promise<{
 		}
 	}
 
-	const sortByGamesDesc = (a: MatchupStats, b: MatchupStats) => b.games - a.games;
+	const sortByGamesDesc = (a: MatchupApiRow, b: MatchupApiRow) => b.games - a.games;
 
 	return {
 		byOpponents: Array.from(byOpponentsMap.values()).sort(sortByGamesDesc),

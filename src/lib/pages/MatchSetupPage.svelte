@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, Input, Card, MultiSelect, Toggle } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '$../../../domain/Player';
+	import type { Player } from '$lib/types';
 	import { navigate } from '$lib/router';
 
 	let teamAmine: string[] = [];

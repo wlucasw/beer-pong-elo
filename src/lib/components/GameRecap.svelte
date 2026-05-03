@@ -7,16 +7,9 @@
 		TableBodyCell,
 		TableHeadCell
 	} from 'flowbite-svelte';
+	import type { Shot } from '$lib/types';
 
-	export let shots: {
-		player: string;
-		hit: boolean;
-		cup: number;
-		bounceCup?: number;
-		sequence: number;
-		round: number;
-		team?: string;
-	}[] = [];
+	export let shots: Shot[] = [];
 
 	let roundsLength: number[];
 

@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 import type { Prisma } from '@prisma/client';
 import prisma from '$lib/prisma';
 
@@ -78,7 +79,7 @@ async function upsertPlayerStatistics(playerId: number) {
 	});
 }
 
-export async function POST({ params, request }) {
+export const POST: RequestHandler = async ({ params, request }) => {
 	const matchId = Number(params.id);
 	const { winner, teamARemainingCups, teamBRemainingCups } = await request.json(); // winner = 'A' | 'B'
 
@@ -174,5 +175,6 @@ export async function POST({ params, request }) {
 	const uniquePlayerIds = Array.from(new Set(playerIds));
 	await Promise.all(uniquePlayerIds.map((pid) => upsertPlayerStatistics(pid)));
 
-	return json({ message: 'Match ended successfully', winner });
-}
+	const response: { message: string; winner: 'A' | 'B' } = { message: 'Match ended successfully', winner };
+	return json(response);
+};

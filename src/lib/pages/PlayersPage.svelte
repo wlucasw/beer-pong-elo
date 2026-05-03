@@ -10,7 +10,7 @@
 	} from 'flowbite-svelte';
 	import { Button, Input, Card } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import type { Player } from '$../../../domain/Player';
+	import type { Player } from '$lib/types';
 
 	let players: Player[] = [];
 	let newPlayerName = '';

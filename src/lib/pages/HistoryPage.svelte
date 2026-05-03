@@ -1,17 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Card, Badge } from 'flowbite-svelte';
-
-	type PlayerLite = { name: string; elo: number };
-	type TeamEntry = { player: PlayerLite };
-	type MatchLite = {
-		id: number;
-		createdAt: string;
-		teamAmineSide: TeamEntry[];
-		teamRobinSide: TeamEntry[];
-		winnerA: boolean;
-		winnerB: boolean;
-	};
+	import type { MatchLite } from '$lib/types';
 
 	let matches: MatchLite[] = [];
 	let loading = true;

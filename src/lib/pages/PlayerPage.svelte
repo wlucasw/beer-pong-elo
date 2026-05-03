@@ -11,7 +11,7 @@
 		Toggle,
 		Card
 	} from 'flowbite-svelte';
-	import type { Player } from '$../../../domain/Player';
+	import type { Player, PlayerDetail, PlayerStats, PlayerWithStats } from '$lib/types';
 	import EloVariationChart from '$lib/components/EloVariationChart.svelte';
 	import PlayerMatchup from '$lib/components/PlayerMatchup.svelte';
 	import PartnerMatchup from '$lib/components/PartnerMatchup.svelte';
@@ -19,22 +19,7 @@
 	import { navigate } from '$lib/router';
 
 	export let params: { id?: string } = {};
-	let player: (Player & {
-		matchesPlayed: number;
-		wins: number;
-		losses: number;
-		winPercent: number;
-		accuracy: number;
-		bounceShotsPerGame: number;
-		opponentsAccuracyDiff: number;
-		recentMatches: Array<{
-			id: number;
-			createdAt: string;
-			opponents: Player[];
-			won: boolean;
-			eloVariation: number;
-		}>;
-	}) | null = null;
+	let player: PlayerWithStats | null = null;
 	$: loading = true;
 	let byDate = false;
 	let xMode: 'index' | 'date' = 'index';
@@ -49,8 +34,8 @@
 			fetch(`/api/player/${id}`),
 			fetch(`/api/player/${id}/statistics`)
 		]);
-		const base = await playerRes.json();
-		const stats = await statsRes.json();
+		const base: PlayerDetail = await playerRes.json();
+		const stats: PlayerStats = await statsRes.json();
 		player = {
 			...base,
 			matchesPlayed: stats.matchesPlayed,
@@ -159,7 +144,7 @@
 									{/if}
 								</TableBodyCell>
 								<TableBodyCell>
-									{match.eloVariation > 0 ? `+${match.eloVariation}` : match.eloVariation}
+									{(match.eloVariation ?? 0) > 0 ? `+${match.eloVariation}` : match.eloVariation}
 								</TableBodyCell>
 							</TableBodyRow>
 						{/each}
