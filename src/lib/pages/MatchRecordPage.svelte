@@ -6,6 +6,7 @@
 	import { navigate } from '$lib/router';
 
 	export let params: { id?: string } = {};
+	let isTeamAmineFirst: boolean | undefined;
 	let match: any = null;
 	let loading = true;
 	let selectedCups: number[] = [];
@@ -15,12 +16,15 @@
 		cup: number;
 		bounceCup?: number;
 		hit: boolean;
+		round: number;
 		team: 'A' | 'B';
 		sequence: number;
 	}[] = [];
 
 	const cups = [[1], [3, 2], [6, 5, 4], [10, 9, 8, 7]];
-	const routeId = () => params?.id ?? (typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : undefined);
+	const routeId = () =>
+		params?.id ??
+		(typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : undefined);
 
 	$: scoreAmine = '';
 	$: scoreRobin = '';
@@ -33,6 +37,13 @@
 	$: isHitB = (cup: number) =>
 		shots.some((s) => (s.cup === cup || s.bounceCup === cup) && s.team === 'B' && s.hit);
 
+	$: currentRound = 0;
+	$: areAllshotsInRoundHits = true;
+	$: numberOfShotInCurrentRound = 0;
+	$: isTeamAmineFirst = undefined;
+	$: isTeamRobinTurn = isTeamAmineFirst ? currentRound % 2 === 1 : currentRound % 2 !== 0;
+	$: isFirstShot = true;
+
 	onMount(async () => {
 		const id = routeId();
 		const res = await fetch(`/api/match/${id}`);
@@ -43,17 +54,39 @@
 			cup: number;
 			hit: boolean;
 			team: 'A' | 'B';
+			round: number;
 			sequence: number;
 		}[] = await recapRes.json();
 		shots = recapData || [];
+		currentRound = shots.length ? Math.max(...shots.map((s) => s.round)) : 0;
+		isTeamAmineFirst = shots.length ? shots[0].team === 'A' : undefined;
+		isFirstShot = shots.length === 0;
+		numberOfShotInCurrentRound = shots.filter((s) => s.round === currentRound).length;
+		areAllshotsInRoundHits = shots.filter((s) => s.round === currentRound).every((s) => s.hit);
+		if (
+			(!areAllshotsInRoundHits && numberOfShotInCurrentRound >= match.numberOfShotByMatch) ||
+			match.numberOfShotByMatch === 1
+		) {
+			currentRound += 1;
+			areAllshotsInRoundHits = true;
+			numberOfShotInCurrentRound = 0;
+		}
 		loading = false;
 	});
 
 	async function recordShot(playerId: number, hit: boolean, team: 'A' | 'B') {
+		if (isFirstShot) {
+			isTeamAmineFirst = team === 'A';
+			isFirstShot = false;
+		}
 		const lastShot = shots
 			.filter((s) => s.team === team)
 			.sort((a, b) => b.sequence - a.sequence)[0];
 		const nextSequence = lastShot ? lastShot.sequence + 1 : 1;
+
+		areAllshotsInRoundHits = hit && areAllshotsInRoundHits;
+
+		numberOfShotInCurrentRound += 1;
 
 		await fetch('/api/shot', {
 			method: 'POST',
@@ -64,6 +97,7 @@
 				hit,
 				cup: hit ? selectedCups[0] : null,
 				team,
+				round: currentRound,
 				sequence: nextSequence
 			})
 		});
@@ -74,9 +108,25 @@
 
 		shots = [
 			...shots,
-			{ player: playerName, cup: selectedCups[0] ?? 0, hit, team, sequence: nextSequence }
+			{
+				player: playerName,
+				cup: selectedCups[0] ?? 0,
+				hit,
+				team,
+				sequence: nextSequence,
+				round: currentRound
+			}
 		];
 		selectedCups = [];
+
+		if (
+			(!areAllshotsInRoundHits && numberOfShotInCurrentRound >= match.numberOfShotByMatch) ||
+			match.numberOfShotByMatch === 1
+		) {
+			currentRound += 1;
+			areAllshotsInRoundHits = true;
+			numberOfShotInCurrentRound = 0;
+		}
 	}
 
 	function isLastStandingCup(cup: number, team: 'A' | 'B') {
@@ -119,6 +169,21 @@
 			const recapRes = await fetch(`/api/match/${match.id}/recap`);
 			const recapData = await recapRes.json();
 			shots = recapData || [];
+			currentRound = shots.length ? Math.max(...shots.map((s) => s.round)) : 0;
+			numberOfShotInCurrentRound = shots.filter((s) => s.round === currentRound).length;
+			areAllshotsInRoundHits = shots.filter((s) => s.round === currentRound).every((s) => s.hit);
+			if (
+				(!areAllshotsInRoundHits && numberOfShotInCurrentRound >= match.numberOfShotByMatch) ||
+				match.numberOfShotByMatch === 1
+			) {
+				currentRound += 1;
+				areAllshotsInRoundHits = true;
+				numberOfShotInCurrentRound = 0;
+			}
+			if (shots.length === 0) {
+				isTeamAmineFirst = undefined;
+				isFirstShot = true;
+			}
 		} catch (err) {
 			console.error('Undo failed:', err);
 			shots = [...shots, lastShot];
@@ -155,6 +220,7 @@
 				bounceCup: selectedCups[1],
 				hit: true,
 				team,
+				round: currentRound,
 				sequence: nextSequence
 			}
 		];
@@ -168,96 +234,150 @@
 	{:else}
 		<h1 class="text-xl font-bold">🎯 Record Match #{match.id}</h1>
 
-		<div class="grid w-full max-w-4xl grid-cols-2 gap-6">
-			<Card class="p-4">
-				<h2 class="mb-2 font-semibold text-blue-600">Team Amine</h2>
-				<CupTriangle
-					{cups}
-					bind:selectedCups
-					onSelectCup={(cup) => {
-						if (selectedCups.includes(cup)) {
-							selectedCups = selectedCups.filter((c) => c !== cup);
-						} else {
-							selectedCups = [...selectedCups, cup];
-						}
-					}}
-					isHit={(cup) => isHitA(cup) && !isLastStandingCup(cup, 'A')}
-				/>
-				<div class="mt-2">
-					{#each match.teamAmineSide as entry}
-						<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-							<span class="mr-2">{entry.player.name}</span>
-							<div class="space-x-2">
-								<Button
-									size="xs"
-									class="mb-2"
-									onclick={() => recordShot(entry.playerId, true, 'A')}
-									disabled={selectedCups.length !== 1}>✅ Touché</Button
-								>
-								<Button
-									size="xs"
-									color="red"
-									class="mb-2"
-									onclick={() => recordShot(entry.playerId, false, 'A')}>❌ Raté</Button
-								>
-								<Button
-									size="xs"
-									color="yellow"
-									onclick={() => recordBounce(entry.playerId, 'A')}
-									disabled={selectedCups.length !== 2}
-								>
-									🏓 Rebond
-								</Button>
+		<div class="grid grid-cols-{isFirstShot ? 2 : 1} gap-6 max-w-4xl">
+			{#if !isTeamRobinTurn}
+				<Card class="p-4">
+					<h2 class="mb-2 font-semibold text-blue-600">Team Amine</h2>
+					<CupTriangle
+						{cups}
+						bind:selectedCups
+						onSelectCup={(cup) => {
+							if (selectedCups.includes(cup)) {
+								selectedCups = selectedCups.filter((c) => c !== cup);
+							} else {
+								selectedCups = [...selectedCups, cup];
+							}
+						}}
+						isHit={(cup) => isHitA(cup) && !isLastStandingCup(cup, 'A')}
+					/>
+					<div class="mt-2">
+						{#each match.teamAmineSide as entry}
+							<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+								<span class="mr-2">{entry.player.name}</span>
+								<div class="space-x-2">
+									<Button
+										size="xs"
+										class="mb-2"
+										onclick={() => recordShot(entry.playerId, true, 'A')}
+										disabled={selectedCups.length !== 1 || (isTeamRobinTurn && !isFirstShot)}
+										>✅ Touché</Button
+									>
+									<Button
+										size="xs"
+										color="red"
+										class="mb-2"
+										disabled={isTeamRobinTurn && !isFirstShot}
+										onclick={() => recordShot(entry.playerId, false, 'A')}>❌ Raté</Button
+									>
+									<Button
+										size="xs"
+										color="yellow"
+										onclick={() => recordBounce(entry.playerId, 'A')}
+										disabled={selectedCups.length !== 2 || (isTeamRobinTurn && !isFirstShot)}
+									>
+										🏓 Rebond
+									</Button>
+								</div>
 							</div>
+						{/each}
+					</div>
+				</Card>
+				{#if isFirstShot}
+					<Card class="p-4">
+						<h2 class="mb-2 font-semibold text-red-600">Robin Side</h2>
+						<CupTriangle
+							{cups}
+							bind:selectedCups
+							onSelectCup={(cup) => {
+								if (selectedCups.includes(cup)) {
+									selectedCups = selectedCups.filter((c) => c !== cup);
+								} else {
+									selectedCups = [...selectedCups, cup];
+								}
+							}}
+							isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
+						/>
+						<div class="mt-2">
+							{#each match.teamRobinSide as entry}
+								<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+									<span class="mr-2">{entry.player.name}</span>
+									<div class="space-x-2">
+										<Button
+											size="xs"
+											class="mb-2"
+											onclick={() => recordShot(entry.playerId, true, 'B')}
+											disabled={selectedCups.length !== 1 || (!isTeamRobinTurn && !isFirstShot)}
+											>✅ Touché</Button
+										>
+										<Button
+											size="xs"
+											color="red"
+											class="mb-2"
+											disabled={!isTeamRobinTurn && !isFirstShot}
+											onclick={() => recordShot(entry.playerId, false, 'B')}>❌ Raté</Button
+										>
+										<Button
+											size="xs"
+											color="yellow"
+											onclick={() => recordBounce(entry.playerId, 'B')}
+											disabled={selectedCups.length !== 2 || (!isTeamRobinTurn && !isFirstShot)}
+										>
+											🏓 Rebond
+										</Button>
+									</div>
+								</div>
+							{/each}
 						</div>
-					{/each}
-				</div>
-			</Card>
-
-			<Card class="p-4">
-				<h2 class="mb-2 font-semibold text-red-600">Robin Side</h2>
-				<CupTriangle
-					{cups}
-					bind:selectedCups
-					onSelectCup={(cup) => {
-						if (selectedCups.includes(cup)) {
-							selectedCups = selectedCups.filter((c) => c !== cup);
-						} else {
-							selectedCups = [...selectedCups, cup];
-						}
-					}}
-					isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
-				/>
-				<div class="mt-2">
-					{#each match.teamRobinSide as entry}
-						<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-							<span class="mr-2">{entry.player.name}</span>
-							<div class="space-x-2">
-								<Button
-									size="xs"
-									class="mb-2"
-									onclick={() => recordShot(entry.playerId, true, 'B')}
-									disabled={selectedCups.length !== 1}>✅ Touché</Button
-								>
-								<Button
-									size="xs"
-									color="red"
-									class="mb-2"
-									onclick={() => recordShot(entry.playerId, false, 'B')}>❌ Raté</Button
-								>
-								<Button
-									size="xs"
-									color="yellow"
-									onclick={() => recordBounce(entry.playerId, 'B')}
-									disabled={selectedCups.length !== 2}
-								>
-									🏓 Rebond
-								</Button>
+					</Card>
+				{/if}
+			{:else}
+				<Card class="p-4">
+					<h2 class="mb-2 font-semibold text-red-600">Robin Side</h2>
+					<CupTriangle
+						{cups}
+						bind:selectedCups
+						onSelectCup={(cup) => {
+							if (selectedCups.includes(cup)) {
+								selectedCups = selectedCups.filter((c) => c !== cup);
+							} else {
+								selectedCups = [...selectedCups, cup];
+							}
+						}}
+						isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
+					/>
+					<div class="mt-2">
+						{#each match.teamRobinSide as entry}
+							<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+								<span class="mr-2">{entry.player.name}</span>
+								<div class="space-x-2">
+									<Button
+										size="xs"
+										class="mb-2"
+										onclick={() => recordShot(entry.playerId, true, 'B')}
+										disabled={selectedCups.length !== 1 || (!isTeamRobinTurn && !isFirstShot)}
+										>✅ Touché</Button
+									>
+									<Button
+										size="xs"
+										color="red"
+										class="mb-2"
+										disabled={!isTeamRobinTurn && !isFirstShot}
+										onclick={() => recordShot(entry.playerId, false, 'B')}>❌ Raté</Button
+									>
+									<Button
+										size="xs"
+										color="yellow"
+										onclick={() => recordBounce(entry.playerId, 'B')}
+										disabled={selectedCups.length !== 2 || (!isTeamRobinTurn && !isFirstShot)}
+									>
+										🏓 Rebond
+									</Button>
+								</div>
 							</div>
-						</div>
-					{/each}
-				</div>
-			</Card>
+						{/each}
+					</div>
+				</Card>
+			{/if}
 		</div>
 
 		<div class="mt-6">
@@ -371,5 +491,3 @@
 		{/if}
 	{/if}
 </main>
-
-

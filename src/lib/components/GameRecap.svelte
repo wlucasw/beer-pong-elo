@@ -14,20 +14,63 @@
 		cup: number;
 		bounceCup?: number;
 		sequence: number;
+		round: number;
 		team?: string;
 	}[] = [];
+
+	let roundsLength: number[];
 
 	// Get unique players
 	$: players = Array.from(new Set(shots.map((s) => s.player)));
 
-	// Find max sequence to know how many columns we need
+	// Find max round to know how many columns we need
+	$: maxRound = shots.length ? Math.max(...shots.map((s) => s.round)) : 0;
 	$: maxSequence = shots.length ? Math.max(...shots.map((s) => s.sequence)) : 0;
+
+	$: roundsLength = new Array(maxRound+1)
+		.fill(null)
+		.map((_, i) => i)
+		.filter((r) => r % 2 === 0)
+		.map((round) => {
+			const roundNumberOfShotsByTeam = players.reduce(
+				(acc, player) => {
+					const playerShots = shots.filter((s) => s.player === player);
+					return {
+						teamNShots: Math.max(
+							acc.teamNShots,
+							playerShots.filter((shot) => shot.round === round).length || 0
+						),
+						opponentShots: Math.max(
+							acc.opponentShots,
+							playerShots.filter((shot) => shot.round === round + 1).length || 0
+						)
+					};
+				},
+				{ teamNShots: 0, opponentShots: 0 }
+			);
+
+			const maxShots = Math.max(
+				roundNumberOfShotsByTeam.teamNShots,
+				roundNumberOfShotsByTeam.opponentShots
+			);
+			return maxShots;
+		});
 
 	// Build a 2D array: rows = players, columns = shot sequence
 	$: grid = players.map((player) => {
-		return Array.from({ length: maxSequence }, (_, i) => {
-			const shot = shots.find((s) => s.player === player && s.sequence === i + 1);
-			return shot ? { hit: shot.hit, cup: shot.cup, bounceCup: shot.bounceCup } : null;
+		const playerShots = shots.filter((s) => s.player === player);
+		console.log('playerShots', roundsLength);
+		return roundsLength.map((roundLength, roundIdx) => {
+			const roundShots = playerShots.filter(
+				(s) => s.round === roundIdx * 2 + 1 || s.round === roundIdx * 2 + 0
+			);
+			const row: ((typeof roundShots)[0] | null)[] = new Array(roundLength).fill(null);
+			roundShots
+				.sort((a, b) => a.sequence - b.sequence)
+				.forEach((shot, idy) => {
+					row[idy] = shot;
+				});
+			return row;
 		});
 	});
 </script>
@@ -35,8 +78,10 @@
 <Table class="text-xs">
 	<TableHead>
 		<TableHeadCell class="px-2 py-0.5 text-xs">Player</TableHeadCell>
-		{#each Array(maxSequence) as _, idx}
-			<TableHeadCell class="px-1 py-0.5 text-xs">{idx + 1}</TableHeadCell>
+		{#each Array(Math.floor(maxRound / 2) + 1) as _, idx}
+			<TableHeadCell class="py-0.5 text-xs w-{6 * (roundsLength[idx] || 0)} px-0 text-center border-l-2 border-gray-700" 
+				>{idx + 1}</TableHeadCell
+			>
 		{/each}
 	</TableHead>
 	<TableBody>
@@ -53,22 +98,32 @@
 
 			{#each players.filter( (player) => shots.find((s) => s.player === player && s.team === team) ) as player}
 				<TableBodyRow>
-					<TableBodyCell class="px-2 py-0.5 text-xs font-semibold">{player}</TableBodyCell>
-					{#each grid[players.indexOf(player)] as cell}
-						<TableBodyCell
-							class="h-4 w-6 p-0.5 text-center text-xs"
-							style="background-color: {cell === null ? '#fff' : cell.hit ? '#4ade80' : '#f87171'}"
-						>
-							{#if cell === null}{:else if cell.hit}
-								{#if cell.bounceCup}
-									{cell.bounceCup},
-								{/if}
-								{#if cell.cup}
-									{cell.cup}
-								{/if}
-							{:else}
-								X
-							{/if}
+					<TableBodyCell class="p-0 text-xs font-semibold">{player}</TableBodyCell>
+					{#each grid[players.indexOf(player)] as round, idx}
+						<TableBodyCell class="h-4 w-full p-0 {idx > 0 ? 'border-l-2 border-gray-700' : ''}">
+							<div class="inline-flex w-full">
+								{#each round as cell}
+									<div
+										class="w-6 text-center text-xs p-0"
+										style="background-color: {cell === null
+											? '#fff'
+											: cell.hit
+												? '#4ade80'
+												: '#f87171'}"
+									>
+										{#if cell === null}-{:else if cell.hit}
+											{#if cell.bounceCup}
+												{cell.bounceCup},
+											{/if}
+											{#if cell.cup}
+												{cell.cup}
+											{/if}
+										{:else}
+											X
+										{/if}
+									</div>
+								{/each}
+							</div>
 						</TableBodyCell>
 					{/each}
 				</TableBodyRow>

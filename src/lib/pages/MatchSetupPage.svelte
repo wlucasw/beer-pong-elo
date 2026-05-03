@@ -39,7 +39,7 @@
 			body: JSON.stringify({
 				teamAmine,
 				teamRobin,
-				ballNumber
+				numberOfShotByMatch: ballNumber
 			})
 		});
 

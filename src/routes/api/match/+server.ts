@@ -25,9 +25,9 @@ export const GET: RequestHandler = async ({ url }) => {
 // POST /api/match
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const { teamAmine, teamRobin, ballNumber } = await request.json();
+		const { teamAmine, teamRobin, numberOfShotByMatch } = await request.json();
 
-		if (teamAmine.length === 0 || teamRobin.length === 0 || !ballNumber) {
+		if (teamAmine.length === 0 || teamRobin.length === 0 || !numberOfShotByMatch) {
 			return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
 		}
 
@@ -45,7 +45,8 @@ export const POST: RequestHandler = async ({ request }) => {
 					create: teamRobin.map((id: string) => ({
 						playerId: Number(id)
 					}))
-				}
+				},
+				numberOfShotByMatch,
 			},
 			include: {
 				teamAmineSide: true,

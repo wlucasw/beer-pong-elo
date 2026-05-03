@@ -27,6 +27,7 @@ export const GET: RequestHandler = async ({ params }) => {
 				bounceCup: shot.bounceCup,
 				hit: shot.hit,
 				team: shot.team,
+				round: shot.round,
 				sequence: shot.sequence
 			};
 		});
