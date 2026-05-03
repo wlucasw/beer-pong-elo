@@ -29,7 +29,8 @@ export const GET: RequestHandler = async ({ params }) => {
 			hit: shot.hit,
 			team: shot.team,
 			round: shot.round,
-			sequence: shot.sequence
+			sequence: shot.sequence,
+			isCounter: shot.isCounter
 		}));
 
 		return json(updatedShots);

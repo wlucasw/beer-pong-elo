@@ -67,6 +67,7 @@ export type Shot = {
 	sequence: number;
 	round: number;
 	team?: string;
+	isCounter: boolean;
 };
 
 export type ShotRecap = {
@@ -78,7 +79,12 @@ export type ShotRecap = {
 	team: string;
 	round: number;
 	sequence: number;
+	isCounter: boolean;
 };
+
+export type ShotPost = {
+	matchId: number; playerId: number; hit: boolean; cup: number | null; team: string; sequence: number; round: number; isCounter: boolean;
+}
 
 export type RecentMatch = {
 	id: number;

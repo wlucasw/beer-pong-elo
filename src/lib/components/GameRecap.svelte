@@ -20,7 +20,7 @@
 	$: maxRound = shots.length ? Math.max(...shots.map((s) => s.round)) : 0;
 	$: maxSequence = shots.length ? Math.max(...shots.map((s) => s.sequence)) : 0;
 
-	$: roundsLength = new Array(maxRound+1)
+	$: roundsLength = new Array(maxRound + 1)
 		.fill(null)
 		.map((_, i) => i)
 		.filter((r) => r % 2 === 0)
@@ -52,7 +52,6 @@
 	// Build a 2D array: rows = players, columns = shot sequence
 	$: grid = players.map((player) => {
 		const playerShots = shots.filter((s) => s.player === player);
-		console.log('playerShots', roundsLength);
 		return roundsLength.map((roundLength, roundIdx) => {
 			const roundShots = playerShots.filter(
 				(s) => s.round === roundIdx * 2 + 1 || s.round === roundIdx * 2 + 0
@@ -72,7 +71,9 @@
 	<TableHead>
 		<TableHeadCell class="px-2 py-0.5 text-xs">Player</TableHeadCell>
 		{#each Array(Math.floor(maxRound / 2) + 1) as _, idx}
-			<TableHeadCell class="py-0.5 text-xs w-{6 * (roundsLength[idx] || 0)} px-0 text-center border-l-2 border-gray-700" 
+			<TableHeadCell
+				class="py-0.5 text-xs w-{6 *
+					(roundsLength[idx] || 0)} border-l-2 border-gray-700 px-0 text-center"
 				>{idx + 1}</TableHeadCell
 			>
 		{/each}
@@ -97,12 +98,16 @@
 							<div class="inline-flex w-full">
 								{#each round as cell}
 									<div
-										class="w-6 text-center text-xs p-0"
+										class="w-6 p-0 text-center text-xs"
 										style="background-color: {cell === null
 											? '#fff'
 											: cell.hit
-												? '#4ade80'
-												: '#f87171'}"
+												? cell.isCounter
+													? '#47BDFF'
+													: '#4ade80'
+												: cell.isCounter
+													? '#F8B271'
+													: '#f87171'}"
 									>
 										{#if cell === null}-{:else if cell.hit}
 											{#if cell.bounceCup}
