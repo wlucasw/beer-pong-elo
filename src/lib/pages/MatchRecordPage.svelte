@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Button, Card } from 'flowbite-svelte';
-	import CupTriangle from '$lib/components/CupTriangle.svelte';
+	import { Button } from 'flowbite-svelte';
+	import TeamRecordCard from '$lib/components/TeamRecordCard.svelte';
 	import GameRecap from '$lib/components/GameRecap.svelte';
 	import { navigate } from '$lib/router';
 
@@ -236,147 +236,42 @@
 
 		<div class="grid grid-cols-{isFirstShot ? 2 : 1} gap-6 max-w-4xl">
 			{#if !isTeamRobinTurn}
-				<Card class="p-4">
-					<h2 class="mb-2 font-semibold text-blue-600">Team Amine</h2>
-					<CupTriangle
+				<TeamRecordCard
+					teamName="Team Amine"
+					team="A"
+					players={match.teamAmineSide}
+					{cups}
+					bind:selectedCups
+					isHit={(cup) => isHitA(cup) && !isLastStandingCup(cup, 'A')}
+					isMyTurn={!isTeamRobinTurn || isFirstShot}
+					onRecordShot={recordShot}
+					onRecordBounce={recordBounce}
+				/>
+				{#if isFirstShot}
+					<TeamRecordCard
+						teamName="Robin Side"
+						team="B"
+						players={match.teamRobinSide}
 						{cups}
 						bind:selectedCups
-						onSelectCup={(cup) => {
-							if (selectedCups.includes(cup)) {
-								selectedCups = selectedCups.filter((c) => c !== cup);
-							} else {
-								selectedCups = [...selectedCups, cup];
-							}
-						}}
-						isHit={(cup) => isHitA(cup) && !isLastStandingCup(cup, 'A')}
+						isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
+						isMyTurn={isTeamRobinTurn || isFirstShot}
+						onRecordShot={recordShot}
+						onRecordBounce={recordBounce}
 					/>
-					<div class="mt-2">
-						{#each match.teamAmineSide as entry}
-							<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-								<span class="mr-2">{entry.player.name}</span>
-								<div class="space-x-2">
-									<Button
-										size="xs"
-										class="mb-2"
-										onclick={() => recordShot(entry.playerId, true, 'A')}
-										disabled={selectedCups.length !== 1 || (isTeamRobinTurn && !isFirstShot)}
-										>✅ Touché</Button
-									>
-									<Button
-										size="xs"
-										color="red"
-										class="mb-2"
-										disabled={isTeamRobinTurn && !isFirstShot}
-										onclick={() => recordShot(entry.playerId, false, 'A')}>❌ Raté</Button
-									>
-									<Button
-										size="xs"
-										color="yellow"
-										onclick={() => recordBounce(entry.playerId, 'A')}
-										disabled={selectedCups.length !== 2 || (isTeamRobinTurn && !isFirstShot)}
-									>
-										🏓 Rebond
-									</Button>
-								</div>
-							</div>
-						{/each}
-					</div>
-				</Card>
-				{#if isFirstShot}
-					<Card class="p-4">
-						<h2 class="mb-2 font-semibold text-red-600">Robin Side</h2>
-						<CupTriangle
-							{cups}
-							bind:selectedCups
-							onSelectCup={(cup) => {
-								if (selectedCups.includes(cup)) {
-									selectedCups = selectedCups.filter((c) => c !== cup);
-								} else {
-									selectedCups = [...selectedCups, cup];
-								}
-							}}
-							isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
-						/>
-						<div class="mt-2">
-							{#each match.teamRobinSide as entry}
-								<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-									<span class="mr-2">{entry.player.name}</span>
-									<div class="space-x-2">
-										<Button
-											size="xs"
-											class="mb-2"
-											onclick={() => recordShot(entry.playerId, true, 'B')}
-											disabled={selectedCups.length !== 1 || (!isTeamRobinTurn && !isFirstShot)}
-											>✅ Touché</Button
-										>
-										<Button
-											size="xs"
-											color="red"
-											class="mb-2"
-											disabled={!isTeamRobinTurn && !isFirstShot}
-											onclick={() => recordShot(entry.playerId, false, 'B')}>❌ Raté</Button
-										>
-										<Button
-											size="xs"
-											color="yellow"
-											onclick={() => recordBounce(entry.playerId, 'B')}
-											disabled={selectedCups.length !== 2 || (!isTeamRobinTurn && !isFirstShot)}
-										>
-											🏓 Rebond
-										</Button>
-									</div>
-								</div>
-							{/each}
-						</div>
-					</Card>
 				{/if}
 			{:else}
-				<Card class="p-4">
-					<h2 class="mb-2 font-semibold text-red-600">Robin Side</h2>
-					<CupTriangle
-						{cups}
-						bind:selectedCups
-						onSelectCup={(cup) => {
-							if (selectedCups.includes(cup)) {
-								selectedCups = selectedCups.filter((c) => c !== cup);
-							} else {
-								selectedCups = [...selectedCups, cup];
-							}
-						}}
-						isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
-					/>
-					<div class="mt-2">
-						{#each match.teamRobinSide as entry}
-							<div class="my-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-								<span class="mr-2">{entry.player.name}</span>
-								<div class="space-x-2">
-									<Button
-										size="xs"
-										class="mb-2"
-										onclick={() => recordShot(entry.playerId, true, 'B')}
-										disabled={selectedCups.length !== 1 || (!isTeamRobinTurn && !isFirstShot)}
-										>✅ Touché</Button
-									>
-									<Button
-										size="xs"
-										color="red"
-										class="mb-2"
-										disabled={!isTeamRobinTurn && !isFirstShot}
-										onclick={() => recordShot(entry.playerId, false, 'B')}>❌ Raté</Button
-									>
-									<Button
-										size="xs"
-										color="yellow"
-										onclick={() => recordBounce(entry.playerId, 'B')}
-										disabled={selectedCups.length !== 2 || (!isTeamRobinTurn && !isFirstShot)}
-									>
-										🏓 Rebond
-									</Button>
-								</div>
-							</div>
-						{/each}
-					</div>
-				</Card>
+				<TeamRecordCard
+					teamName="Robin Side"
+					team="B"
+					players={match.teamRobinSide}
+					{cups}
+					bind:selectedCups
+					isHit={(cup) => isHitB(cup) && !isLastStandingCup(cup, 'B')}
+					isMyTurn={isTeamRobinTurn || isFirstShot}
+					onRecordShot={recordShot}
+					onRecordBounce={recordBounce}
+				/>
 			{/if}
 		</div>
 
