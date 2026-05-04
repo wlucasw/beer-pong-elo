@@ -18,8 +18,8 @@
 		const recapRes = await fetch(`/api/match/${id}/recap`);
 		shots = await recapRes.json();
 		loading = false;
+		console.log({ match });
 	});
-
 </script>
 
 <main class="flex flex-col items-center space-y-6 p-6">
@@ -29,8 +29,8 @@
 		<h1 class="text-2xl font-bold">📊 Match Recap #{match.id}</h1>
 
 		<div class="grid w-full max-w-4xl grid-cols-2 gap-6">
-			<TeamRecapCard teamName="Team Amine" players={match.teamAmineSide} {shots} team="A" />
-			<TeamRecapCard teamName="Team Robin" players={match.teamRobinSide} {shots} team="B" />
+			<TeamRecapCard teamName="Team Amine" players={match.teamAmineSide} {shots} team="A" isWinner={match.winnerA} />
+			<TeamRecapCard teamName="Team Robin" players={match.teamRobinSide} {shots} team="B" isWinner={match.winnerB} />
 		</div>
 
 		<div class="overflow-x-auto" style="max-width: 90vw;">

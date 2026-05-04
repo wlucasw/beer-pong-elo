@@ -6,6 +6,7 @@
 	export let players: { player: { name: string } }[];
 	export let shots: Shot[];
 	export let team: 'A' | 'B';
+	export let isWinner = false;
 
 	function teamStats() {
 		const tShots = shots.filter((s) => s.team === team);
@@ -24,10 +25,11 @@
 
 	$: stats = teamStats();
 	$: colorClass = team === 'A' ? 'text-blue-600' : 'text-red-600';
+	console.log({ isWinner });
 </script>
 
-<Card class="p-4">
-	<h2 class="mb-2 font-semibold {colorClass}">{teamName}</h2>
+<Card class="p-4" style={isWinner ? 'border-color: gold; border-width: 2px;' : ''}>
+	<h2 class="mb-2 font-semibold {colorClass}">{teamName} {isWinner ? '👑' : ''}</h2>
 	<p>Nombre de tirs: {stats.shots}</p>
 	<p>Verre mis: {stats.hits}</p>
 	<p>Précision: {stats.rate}%</p>
