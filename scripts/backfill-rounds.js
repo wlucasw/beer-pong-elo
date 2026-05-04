@@ -113,7 +113,7 @@ async function main() {
 	console.log('Starting round/isCounter backfill...');
 
 	const matches = await prisma.match.findMany({
-		where: { status: 'FINISHED', numberOfShotByMatch: { gte: 0 } },
+		where: { status: 'FINISHED', numberOfShotByMatch: { gte: 2 } },
 		orderBy: { createdAt: 'asc' }
 	});
 
