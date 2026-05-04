@@ -3,12 +3,25 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function backfillMatch(match) {
-	const shots = await prisma.shot.findMany({
-		where: { matchId: match.id },
-		orderBy: { createdAt: 'asc' }
+	const allShots = await prisma.shot.findMany({
+		where: { matchId: match.id }
 	});
 
-	if (shots.length === 0) return 0;
+	if (allShots.length === 0) return 0;
+
+	const shotsA = allShots.filter((s) => s.team === 'A').sort((a, b) => a.sequence - b.sequence);
+	const shotsB = allShots.filter((s) => s.team === 'B').sort((a, b) => a.sequence - b.sequence);
+
+	// The team whose first shot was recorded earliest goes first
+	const firstA = shotsA[0];
+	const firstB = shotsB[0];
+	let currentTeam =
+		!firstA ? 'B'
+		: !firstB ? 'A'
+		: firstA.createdAt <= firstB.createdAt ? 'A' : 'B';
+
+	let idxA = 0;
+	let idxB = 0;
 
 	let currentRound = 0;
 	let isCounter = false;
@@ -23,10 +36,19 @@ async function backfillMatch(match) {
 
 	const updates = [];
 
-	for (const shot of shots) {
-		const team = shot.team;
+	while (idxA < shotsA.length || idxB < shotsB.length) {
+		const teamShots = currentTeam === 'A' ? shotsA : shotsB;
+		const idx = currentTeam === 'A' ? idxA : idxB;
 
-		// Capture state before advancing — this is what gets written to the shot
+		if (idx >= teamShots.length) {
+			// Current team exhausted, drain the other
+			currentTeam = currentTeam === 'A' ? 'B' : 'A';
+			continue;
+		}
+
+		const shot = teamShots[idx];
+		if (currentTeam === 'A') idxA++; else idxB++;
+
 		const shotRound = currentRound;
 		const shotIsCounter = isCounter;
 
@@ -34,23 +56,24 @@ async function backfillMatch(match) {
 		numberOfShotsInCurrentRound += 1;
 
 		if (shot.hit) {
-			teamHits[team] += shot.bounceCup != null ? 2 : 1;
+			teamHits[currentTeam] += shot.bounceCup != null ? 2 : 1;
 		}
 
 		if (shot.hit && numberToCounter > 0) {
 			numberToCounter -= 1;
 			if (numberToCounter === 0) isCounter = false;
 		}
-		if (shot.hit && teamHits[team] >= 10) {
+		if (shot.hit && teamHits[currentTeam] >= 10) {
 			isToBeCounter = true;
 			numberToBeCountered += 1;
 		}
 
-		if (
+		const roundAdvanced =
 			(isToBeCounter && numberToBeCountered >= match.numberOfShotByMatch) ||
 			(!areAllShotsInRoundHits && numberOfShotsInCurrentRound >= match.numberOfShotByMatch) ||
-			match.numberOfShotByMatch === 1
-		) {
+			match.numberOfShotByMatch === 1;
+
+		if (roundAdvanced) {
 			currentRound += 1;
 			areAllShotsInRoundHits = true;
 			numberOfShotsInCurrentRound = 0;
@@ -58,6 +81,7 @@ async function backfillMatch(match) {
 			isToBeCounter = false;
 			numberToCounter = numberToBeCountered;
 			numberToBeCountered = 0;
+			currentTeam = currentTeam === 'A' ? 'B' : 'A';
 		}
 
 		updates.push(
@@ -85,6 +109,16 @@ async function main() {
 	let totalShots = 0;
 	let failedMatches = 0;
 	for (const match of matches) {
+		const maxPlayerByTeam = Math.max(await prisma.matchTeamA.count({
+			where: { matchId: match.id },
+		}), await prisma.matchTeamB.count({
+			where: { matchId: match.id },
+		}));
+		await prisma.match.update({
+			where: { id: match.id },
+			data: { numberOfShotByMatch: Math.max(maxPlayerByTeam,2) }
+		});
+		match.numberOfShotByMatch = Math.max(maxPlayerByTeam,2);
 		try {
 			const count = await backfillMatch(match);
 			console.log(`Match ${match.id}: updated ${count} shots`);
