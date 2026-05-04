@@ -78,4 +78,5 @@ model Statistics {
   losses                Int    @default(0)
   bounceShots           Int    @default(0)
   opponentsAccuracyDiff Float  @default(0)
+  counterAccuracy    Float  @default(0)
 }

@@ -44,7 +44,8 @@
 			winPercent: stats.winPercent,
 			accuracy: stats.accuracy,
 			bounceShotsPerGame: Math.round(stats.bounceShots / stats.matchesPlayed * 100) / 100,
-			opponentsAccuracyDiff: stats.opponentsAccuracyDiff
+			opponentsAccuracyDiff: stats.opponentsAccuracyDiff,
+			counterAccuracy: stats.counterAccuracy,
 		};
 		loading = false;
 	});
@@ -89,6 +90,12 @@
 					</span>
 				</p>
 				<p class="text-gray-600">Rebonds par game: <span class="font-semibold">{player.bounceShotsPerGame}</span></p>
+				<p style="color: hsl({(120 * player.counterAccuracy) / 100}, 70%, 45%)">
+					Précision de contre:
+					<span class="font-semibold">
+						{player.counterAccuracy.toFixed(2)}%
+					</span>
+				</p>
 			</div>
 		</Card>
 

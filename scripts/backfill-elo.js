@@ -85,7 +85,7 @@ async function computeOpponentsAccuracyDiff(playerId) {
 }
 
 async function upsertPlayerStatistics(playerId) {
-	const [totalShots, hits, bounceShots, matchesPlayed, wins] = await Promise.all([
+	const [totalShots, hits, bounceShots, matchesPlayed, wins, counterShots, counterHits] = await Promise.all([
 		prisma.shot.count({ where: { playerId } }),
 		prisma.shot.count({ where: { playerId, hit: true } }),
 		prisma.shot.count({ where: { playerId, bounceCup: { not: null } } }),
@@ -103,22 +103,26 @@ async function upsertPlayerStatistics(playerId) {
 					{ AND: [{ teamRobinSide: { some: { playerId } } }, { winnerB: true }] }
 				]
 			}
-		})
+		}),
+			prisma.shot.count({ where: { playerId, isCounter: true } }),
+		prisma.shot.count({ where: { playerId, isCounter: true, hit: true } })
 	]);
 	const losses = Math.max(0, matchesPlayed - wins);
 	const accuracy = totalShots === 0 ? 0 : hits / totalShots;
 	const opponentsAccuracyDiff = await computeOpponentsAccuracyDiff(playerId);
+	const counterAccuracy = counterShots === 0 ? 0 : (counterHits / counterShots);
 
 	await prisma.$executeRaw`
-		INSERT INTO "Statistics" ("playerId","accuracy","matchesPlayed","wins","losses","bounceShots","opponentsAccuracyDiff")
-		VALUES (${playerId}, ${accuracy}, ${matchesPlayed}, ${wins}, ${losses}, ${bounceShots}, ${opponentsAccuracyDiff})
+		INSERT INTO "Statistics" ("playerId","accuracy","matchesPlayed","wins","losses","bounceShots","opponentsAccuracyDiff","counterAccuracy")
+		VALUES (${playerId}, ${accuracy}, ${matchesPlayed}, ${wins}, ${losses}, ${bounceShots}, ${opponentsAccuracyDiff}, ${counterAccuracy})
 		ON CONFLICT ("playerId") DO UPDATE SET
 			"accuracy" = EXCLUDED."accuracy",
 			"matchesPlayed" = EXCLUDED."matchesPlayed",
 			"wins" = EXCLUDED."wins",
 			"losses" = EXCLUDED."losses",
 			"bounceShots" = EXCLUDED."bounceShots",
-			"opponentsAccuracyDiff" = EXCLUDED."opponentsAccuracyDiff";
+			"opponentsAccuracyDiff" = EXCLUDED."opponentsAccuracyDiff",
+			"counterAccuracy" = EXCLUDED."counterAccuracy"
 	`;
 }
 

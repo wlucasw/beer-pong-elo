@@ -19,13 +19,14 @@ export const GET: RequestHandler = async ({ params }) => {
 			winPercent: stat.matchesPlayed > 0 ? (stat.wins / stat.matchesPlayed) * 100 : 0,
 			accuracy: stat.accuracy * 100,
 			bounceShots: stat.bounceShots,
-			opponentsAccuracyDiff: stat.opponentsAccuracyDiff != null ? stat.opponentsAccuracyDiff * 100 : 0
+			opponentsAccuracyDiff: stat.opponentsAccuracyDiff != null ? stat.opponentsAccuracyDiff * 100 : 0,
+			counterAccuracy: stat.counterAccuracy != null ? stat.counterAccuracy * 100 : 0
 		};
 		return json(response);
 	}
 
 	// Fallback compute if no statistics row exists yet
-	const [totalShots, hits, bounceShots, matchesPlayed, wins] = await Promise.all([
+	const [totalShots, hits, bounceShots, matchesPlayed, wins, counterShots, counterHits] = await Promise.all([
 		prisma.shot.count({ where: { playerId } }),
 		prisma.shot.count({ where: { playerId, hit: true } }),
 		prisma.shot.count({ where: { playerId, bounceCup: { not: null } } }),
@@ -43,7 +44,9 @@ export const GET: RequestHandler = async ({ params }) => {
 					{ AND: [{ teamRobinSide: { some: { playerId } } }, { winnerB: true }] }
 				]
 			}
-		})
+		}),
+		prisma.shot.count({ where: { playerId, isCounter: true } }),
+		prisma.shot.count({ where: { playerId, isCounter: true, hit: true } })
 	]);
 	const losses = Math.max(0, matchesPlayed - wins);
 
@@ -54,7 +57,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		winPercent: matchesPlayed > 0 ? (wins / matchesPlayed) * 100 : 0,
 		accuracy: totalShots === 0 ? 0 : (hits / totalShots) * 100,
 		bounceShots,
-		opponentsAccuracyDiff: 0
+		opponentsAccuracyDiff: 0,
+		counterAccuracy: counterShots === 0 ? 0 : (counterHits / counterShots) * 100
 	};
 
 	return json(response);

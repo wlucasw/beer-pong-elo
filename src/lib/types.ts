@@ -111,6 +111,7 @@ export type PlayerStats = {
 	accuracy: number;
 	bounceShots: number;
 	opponentsAccuracyDiff: number;
+	counterAccuracy: number;
 };
 
 export type PlayerWithStats = Player & {
@@ -121,5 +122,6 @@ export type PlayerWithStats = Player & {
 	accuracy: number;
 	bounceShotsPerGame: number;
 	opponentsAccuracyDiff: number;
+	counterAccuracy: number;
 	recentMatches: RecentMatch[];
 };

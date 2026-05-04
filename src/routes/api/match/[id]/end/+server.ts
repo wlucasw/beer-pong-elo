@@ -58,6 +58,9 @@ async function upsertPlayerStatistics(playerId: number) {
 	]);
 	const losses = Math.max(0, matchesPlayed - wins);
 	const accuracy = totalShots === 0 ? 0 : hits / totalShots;
+	const counterShots = await prisma.shot.count({ where: { playerId, isCounter: true } });
+	const counterHits = await prisma.shot.count({ where: { playerId, isCounter: true, hit: true } });
+	const counterAccuracy = counterShots === 0 ? 0 : counterHits / counterShots;
 
 	await prisma.statistics.upsert({
 		where: { playerId },
@@ -66,7 +69,8 @@ async function upsertPlayerStatistics(playerId: number) {
 			matchesPlayed,
 			wins,
 			losses,
-			bounceShots
+			bounceShots,
+			counterAccuracy
 		},
 		create: {
 			playerId,
@@ -74,7 +78,8 @@ async function upsertPlayerStatistics(playerId: number) {
 			matchesPlayed,
 			wins,
 			losses,
-			bounceShots
+			bounceShots,
+			counterAccuracy
 		}
 	});
 }
