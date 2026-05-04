@@ -19,14 +19,14 @@
 		modalOpen = true;
 	}
 
-	async function recalculate() {
+	async function submit(numberOfShots: number) {
 		recalcError = '';
 		recalculating = true;
 		try {
 			const res = await fetch(`/api/match/${matchId}/recalculate`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ numberOfShotByMatch: shotsByMatch })
+				body: JSON.stringify({ numberOfShotByMatch: numberOfShots })
 			});
 			if (!res.ok) {
 				recalcError = (await res.text()) || 'Recalculation failed';
@@ -71,8 +71,11 @@
 				{/if}
 			</div>
 			<div class="flex flex-col gap-3">
-				<Button color="blue" onclick={recalculate} disabled={recalculating}>
+				<Button color="blue" onclick={() => submit(shotsByMatch)} disabled={recalculating}>
 					{recalculating ? 'Recalculating…' : 'Recalculate'}
+				</Button>
+				<Button color="red" onclick={() => submit(-1)} disabled={recalculating}>
+					Reset rounds
 				</Button>
 				<Button color="gray" onclick={() => (modalOpen = false)}>Cancel</Button>
 			</div>

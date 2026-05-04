@@ -7,16 +7,19 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	const matchId = Number(params.id);
 	const { numberOfShotByMatch } = await request.json();
 
-	if (!Number.isInteger(numberOfShotByMatch) || numberOfShotByMatch < 1) {
-		throw error(400, 'numberOfShotByMatch must be a positive integer');
+	if (!Number.isInteger(numberOfShotByMatch) || (numberOfShotByMatch < 1 && numberOfShotByMatch !== -1)) {
+		throw error(400, 'numberOfShotByMatch must be a positive integer or -1');
 	}
 
-	await prisma.match.update({
-		where: { id: matchId },
-		data: { numberOfShotByMatch }
-	});
-
-	await recalculateRounds(matchId, numberOfShotByMatch);
+	if (numberOfShotByMatch === -1) {
+		await prisma.$transaction([
+			prisma.shot.updateMany({ where: { matchId }, data: { round: -1, isCounter: false } }),
+			prisma.match.update({ where: { id: matchId }, data: { numberOfShotByMatch: -1 } })
+		]);
+	} else {
+		await prisma.match.update({ where: { id: matchId }, data: { numberOfShotByMatch } });
+		await recalculateRounds(matchId, numberOfShotByMatch);
+	}
 
 	const match = await prisma.match.findUnique({
 		where: { id: matchId },
