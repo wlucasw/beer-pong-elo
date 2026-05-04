@@ -69,11 +69,6 @@ export async function recalculateRounds(matchId: number, numberOfShotByMatch: nu
 			if (numberToCounter > 0) hasWinner = true;
 
 			const nextTeam: 'A' | 'B' = currentTeam === 'A' ? 'B' : 'A';
-			const nextIdx = nextTeam === 'A' ? idxA : idxB;
-			const nextTeamShots = nextTeam === 'A' ? shotsA : shotsB;
-			if (!hasWinner && nextIdx >= nextTeamShots.length) {
-				throw new Error(`round advanced to team ${nextTeam} but their shot array is empty`);
-			}
 
 			currentRound += 1;
 			areAllShotsInRoundHits = true;
@@ -91,10 +86,6 @@ export async function recalculateRounds(matchId: number, numberOfShotByMatch: nu
 				data: { round: shotRound, isCounter: shotIsCounter }
 			})
 		);
-	}
-
-	if (!hasWinner) {
-		throw new Error('match ended with no winner (no counter was left unanswered)');
 	}
 
 	await prisma.$transaction(updates);
