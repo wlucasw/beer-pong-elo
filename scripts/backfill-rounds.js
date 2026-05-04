@@ -30,6 +30,7 @@ async function backfillMatch(match) {
 	let numberToBeCountered = 0;
 	let areAllShotsInRoundHits = true;
 	let numberOfShotsInCurrentRound = 0;
+	let hasWinner = false;
 
 	// Cumulative hits per team (bounce = 2 hits)
 	const teamHits = { A: 0, B: 0 };
@@ -41,7 +42,6 @@ async function backfillMatch(match) {
 		const idx = currentTeam === 'A' ? idxA : idxB;
 
 		if (idx >= teamShots.length) {
-			// Current team exhausted, drain the other
 			currentTeam = currentTeam === 'A' ? 'B' : 'A';
 			continue;
 		}
@@ -74,6 +74,15 @@ async function backfillMatch(match) {
 			match.numberOfShotByMatch === 1;
 
 		if (roundAdvanced) {
+			if (numberToCounter > 0) hasWinner = true;
+
+			const nextTeam = currentTeam === 'A' ? 'B' : 'A';
+			const nextIdx = nextTeam === 'A' ? idxA : idxB;
+			const nextTeamShots = nextTeam === 'A' ? shotsA : shotsB;
+			if (!hasWinner && nextIdx >= nextTeamShots.length) {
+				throw new Error(`round advanced to team ${nextTeam} but their shot array is empty`);
+			}
+
 			currentRound += 1;
 			areAllShotsInRoundHits = true;
 			numberOfShotsInCurrentRound = 0;
@@ -81,7 +90,7 @@ async function backfillMatch(match) {
 			isToBeCounter = false;
 			numberToCounter = numberToBeCountered;
 			numberToBeCountered = 0;
-			currentTeam = currentTeam === 'A' ? 'B' : 'A';
+			currentTeam = nextTeam;
 		}
 
 		updates.push(
@@ -90,6 +99,10 @@ async function backfillMatch(match) {
 				data: { round: shotRound, isCounter: shotIsCounter }
 			})
 		);
+	}
+
+	if (!hasWinner) {
+		throw new Error('match ended with no winner (no counter was left unanswered)');
 	}
 
 	await prisma.$transaction(updates);
@@ -107,7 +120,8 @@ async function main() {
 	console.log(`Found ${matches.length} finished matches.`);
 
 	let totalShots = 0;
-	let failedMatches = 0;
+	const noWinnerIds = [];
+	const emptyTeamIds = [];
 	for (const match of matches) {
 		const maxPlayerByTeam = Math.max(await prisma.matchTeamA.count({
 			where: { matchId: match.id },
@@ -125,18 +139,30 @@ async function main() {
 			totalShots += count;
 		} catch (e) {
 			console.error(`Match ${match.id}: backfill failed — ${e.message}`);
-			await prisma.match.update({
-				where: { id: match.id },
-				data: { numberOfShotByMatch: -1 }
-			});
-			console.warn(`Match ${match.id}: numberOfShotByMatch set to -1`);
-			failedMatches += 1;
+			await prisma.$transaction([
+				prisma.shot.updateMany({
+					where: { matchId: match.id },
+					data: { isCounter: false, round: -1 }
+				}),
+				prisma.match.update({
+					where: { id: match.id },
+					data: { numberOfShotByMatch: -1 }
+				})
+			]);
+			console.warn(`Match ${match.id}: shots reset and numberOfShotByMatch set to -1`);
+			if (e.message.includes('no winner')) noWinnerIds.push(match.id);
+			else emptyTeamIds.push(match.id);
 		}
 	}
 
+	const failedCount = noWinnerIds.length + emptyTeamIds.length;
 	console.log(
-		`Backfill complete. Updated ${totalShots} shots across ${matches.length - failedMatches} matches. ${failedMatches} failed.`
+		`\nBackfill complete. Updated ${totalShots} shots across ${matches.length - failedCount} matches. ${failedCount} failed.`
 	);
+	if (noWinnerIds.length > 0)
+		console.log(`  No winner (${noWinnerIds.length}): ${noWinnerIds.join(', ')}`);
+	if (emptyTeamIds.length > 0)
+		console.log(`  Empty team on switch (${emptyTeamIds.length}): ${emptyTeamIds.join(', ')}`);
 }
 
 main()
