@@ -8,8 +8,11 @@
 		TableHeadCell
 	} from 'flowbite-svelte';
 	import type { Shot } from '$lib/types';
+	import GameRecapLegacy from './GameRecapLegacy.svelte';
 
 	export let shots: Shot[] = [];
+
+	$: isLegacy = shots.length > 0 && shots.every((s) => s.round === -1);
 
 	let roundsLength: number[];
 
@@ -67,6 +70,11 @@
 	});
 </script>
 
+{#if shots.length === 0}
+	<p class="text-xs text-gray-500">Quick games have no recap</p>
+{:else if isLegacy}
+	<GameRecapLegacy {shots} />
+{:else}
 <Table class="text-xs">
 	<TableHead>
 		<TableHeadCell class="px-2 py-0.5 text-xs">Player</TableHeadCell>
@@ -129,3 +137,4 @@
 		{/each}
 	</TableBody>
 </Table>
+{/if}
