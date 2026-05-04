@@ -37,28 +37,30 @@
 			</div>
 			<Button
 				color="blue"
+				class="h-auto py-3"
 				onclick={() => onConfirm('A', Number(scoreAmine), Number(scoreRobin))}
 				disabled={scoreAmine === ''}
 			>
-				🏆 {match.teamAmineSide[0]?.teamName || 'Amine Side'}
+				<div class="flex flex-col items-center gap-0.5">
+					<span>🏆 {match.teamAmineSide.map((e) => e.player.name).join(' · ')}</span>
+					<span class="text-xs font-normal opacity-75"
+						>{match.teamAmineSide[0].teamName || 'Amine Side'}</span
+					>
+				</div>
 			</Button>
-			<div class="mb-2 ml-2 text-xs text-gray-500">
-				{#each match.teamAmineSide as entry, i}
-					{entry.player.name}{i < match.teamAmineSide.length - 1 ? ', ' : ''}
-				{/each}
-			</div>
 			<Button
 				color="red"
+				class="h-auto py-3"
 				onclick={() => onConfirm('B', Number(scoreAmine), Number(scoreRobin))}
 				disabled={scoreRobin === ''}
 			>
-				🏆 {match.teamRobinSide[0]?.teamName || 'Robin Side'}
+				<div class="flex flex-col items-center gap-0.5">
+					<span>🏆 {match.teamRobinSide.map((e) => e.player.name).join(' · ')}</span>
+					<span class="text-xs font-normal opacity-75"
+						>{match.teamRobinSide[0].teamName || 'Robin Side'}</span
+					>
+				</div>
 			</Button>
-			<div class="mb-2 ml-2 text-xs text-gray-500">
-				{#each match.teamRobinSide as entry, i}
-					{entry.player.name}{i < match.teamRobinSide.length - 1 ? ', ' : ''}
-				{/each}
-			</div>
 		</div>
 		<Button class="mt-4" color="gray" onclick={onClose}>Annuler</Button>
 	</div>
