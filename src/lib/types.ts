@@ -125,3 +125,9 @@ export type PlayerWithStats = Player & {
 	counterAccuracy: number;
 	recentMatches: RecentMatch[];
 };
+
+export type PlayerLeaderboard = Player & {
+	matchesPlayed: number;
+	winPercent: number;
+	accuracy: number;
+};
