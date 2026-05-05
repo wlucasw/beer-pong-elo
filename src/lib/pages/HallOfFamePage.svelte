@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import HallOfFameCard from '$lib/components/HallOfFameCard.svelte';
 	import type { HallOfFameCardEntry, HallOfFameDuoEntry, HallOfFameData } from '$lib/types';
+	import { MIN_GAMES_FOR_CAREER_STAT, MIN_SHOTS_FOR_SINGLE_GAME_ACCURACY } from '$lib/constants';
 
 	let data: HallOfFameData | null = null;
 	let loading = true;
@@ -95,7 +96,7 @@
 				},
 				{
 					title: '🎯 Meilleure précision de contre',
-					subtitle: 'Carrière — min. 3 parties',
+					subtitle: `Carrière — min. ${MIN_GAMES_FOR_CAREER_STAT} parties`,
 					entries: data.bestCounterAccuracy.map((e): HallOfFameCardEntry => ({
 						rank: e.rank,
 						label: e.playerName,
@@ -105,7 +106,7 @@
 				},
 				{
 					title: '💎 Meilleure précision en une partie',
-					subtitle: 'Min. 5 tirs dans la partie',
+					subtitle: `Min. ${MIN_SHOTS_FOR_SINGLE_GAME_ACCURACY} tirs dans la partie`,
 					entries: data.bestSingleGameAccuracy.map((e): HallOfFameCardEntry => ({
 						rank: e.rank,
 						label: e.playerName,
@@ -126,22 +127,22 @@
 				},
 				{
 					title: '🤝 Duo qui boost le plus le winrate',
-					subtitle: `Min. 3 parties ensemble`,
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties ensemble`,
 					entries: data.bestDuoWinRate.map(duoToEntry)
 				},
 				{
 					title: '💔 Duo qui plombe le plus le winrate',
-					subtitle: `Min. 3 parties ensemble`,
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties ensemble`,
 					entries: data.worstDuoWinRate.map(duoToEntry)
 				},
 				{
 					title: '✨ Duo qui boost le plus la précision',
-					subtitle: `Min. 3 parties ensemble`,
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties ensemble`,
 					entries: data.bestDuoAccuracy.map(duoToEntry)
 				},
 				{
 					title: '😬 Duo qui plombe le plus la précision',
-					subtitle: `Min. 3 parties ensemble`,
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties ensemble`,
 					entries: data.worstDuoAccuracy.map(duoToEntry)
 				}
 			]

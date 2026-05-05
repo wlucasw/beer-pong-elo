@@ -1,0 +1,2 @@
+export const MIN_GAMES_FOR_CAREER_STAT = 5;
+export const MIN_SHOTS_FOR_SINGLE_GAME_ACCURACY = 8;

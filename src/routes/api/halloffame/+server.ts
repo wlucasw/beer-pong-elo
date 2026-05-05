@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/prisma';
+import { MIN_GAMES_FOR_CAREER_STAT, MIN_SHOTS_FOR_SINGLE_GAME_ACCURACY } from '$lib/constants';
 import type {
 	HallOfFameData,
 	HallOfFameDuoEntry,
@@ -9,8 +10,6 @@ import type {
 	HallOfFamePlayerMatchEntry
 } from '$lib/types';
 
-const MIN_GAMES_FOR_CAREER_STAT = 3;
-const MIN_SHOTS_FOR_SINGLE_GAME_ACCURACY = 5;
 
 export const GET: RequestHandler = async () => {
 	const [
