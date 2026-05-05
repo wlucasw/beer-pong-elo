@@ -11,8 +11,9 @@
 		Toggle,
 		Card
 	} from 'flowbite-svelte';
-	import type { Player, PlayerDetail, PlayerStats, PlayerWithStats } from '$lib/types';
+	import type { CupAccuracyPoint, Player, PlayerDetail, PlayerStats, PlayerWithStats } from '$lib/types';
 	import EloVariationChart from '$lib/components/EloVariationChart.svelte';
+	import CupAccuracyChart from '$lib/components/CupAccuracyChart.svelte';
 	import PlayerMatchup from '$lib/components/PlayerMatchup.svelte';
 	import PartnerMatchup from '$lib/components/PartnerMatchup.svelte';
 	import CollapsibleCard from '$lib/components/CollapsibleCard.svelte';
@@ -24,18 +25,28 @@
 	let byDate = false;
 	let xMode: 'index' | 'date' = 'index';
 	$: xMode = byDate ? 'date' : 'index';
+	let cupAccuracyData: CupAccuracyPoint[] = [];
+
+	function clutchRate(data: CupAccuracyPoint[]): number {
+		const clutch = data.filter((d) => d.cupsRemaining <= 3);
+		const hits = clutch.reduce((s, d) => s + d.hits, 0);
+		const total = clutch.reduce((s, d) => s + d.total, 0);
+		return total === 0 ? 0 : (hits / total) * 100;
+	}
 
 	const routeId = () => params?.id ?? (typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : undefined);
 
 	onMount(async () => {
 		const id = routeId();
 		if (!id) return;
-		const [playerRes, statsRes] = await Promise.all([
+		const [playerRes, statsRes, cupAccRes] = await Promise.all([
 			fetch(`/api/player/${id}`),
-			fetch(`/api/player/${id}/statistics`)
+			fetch(`/api/player/${id}/statistics`),
+			fetch(`/api/player/${id}/cup-accuracy`)
 		]);
 		const base: PlayerDetail = await playerRes.json();
 		const stats: PlayerStats = await statsRes.json();
+		cupAccuracyData = await cupAccRes.json();
 		player = {
 			...base,
 			matchesPlayed: stats.matchesPlayed,
@@ -96,6 +107,13 @@
 						{player.counterAccuracy.toFixed(2)}%
 					</span>
 				</p>
+				{#if cupAccuracyData.length > 0}
+				{@const clutch = clutchRate(cupAccuracyData)}
+				<p style="color: hsl({(120 * clutch) / 100}, 70%, 45%)">
+					Clutch (≤3 coupes):
+					<span class="font-semibold">{clutch.toFixed(1)}%</span>
+				</p>
+				{/if}
 			</div>
 		</Card>
 
@@ -107,6 +125,14 @@
 			</div>
 			{#if player.recentMatches.length > 0}
 				<EloVariationChart matches={player.recentMatches} {xMode} />
+			{:else}
+				<p class="text-sm text-gray-500">Aucune donnée à afficher.</p>
+			{/if}
+		</CollapsibleCard>
+
+		<CollapsibleCard title="🎯 Précision par verres restantes" className="w-full max-w-3xl p-4">
+			{#if cupAccuracyData.some((d) => d.total > 0)}
+				<CupAccuracyChart data={cupAccuracyData} />
 			{:else}
 				<p class="text-sm text-gray-500">Aucune donnée à afficher.</p>
 			{/if}

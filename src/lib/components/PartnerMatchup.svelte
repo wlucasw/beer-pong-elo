@@ -18,7 +18,12 @@
 				wins: r.wins,
 				losses: r.losses,
 				shotsHit: r.shotsHit,
-				shotsTotal: r.shotsTotal
+				shotsTotal: r.shotsTotal,
+				theirShotsHit: r.theirShotsHit,
+				theirShotsTotal: r.theirShotsTotal,
+				theirGlobalAccuracyPct: r.theirGlobalAccuracyPct,
+				theirWinPercentVsUs: r.theirWinPercentVsUs,
+				theirGlobalWinPercent: r.theirGlobalWinPercent
 			}));
 		} catch {
 			items = [];
@@ -38,4 +43,4 @@
 		})());
 </script>
 
-<MatchupTable title="🤝 Matchups par partenaire" nameHeader="Partenaire" {items} {loading} />
+<MatchupTable title="🤝 Matchups par partenaire" nameHeader="Partenaire" {items} {loading} isOpponent={false} />

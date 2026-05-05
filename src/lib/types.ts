@@ -11,6 +11,11 @@ export type MatchupRow = {
 	losses: number;
 	shotsHit: number;
 	shotsTotal: number;
+	theirShotsHit: number;
+	theirShotsTotal: number;
+	theirGlobalAccuracyPct: number;
+	theirWinPercentVsUs: number;
+	theirGlobalWinPercent: number;
 };
 
 export type MatchupApiRow = MatchupRow & { id: number };
@@ -129,5 +134,12 @@ export type PlayerWithStats = Player & {
 export type PlayerLeaderboard = Player & {
 	matchesPlayed: number;
 	winPercent: number;
+	accuracy: number;
+};
+
+export type CupAccuracyPoint = {
+	cupsRemaining: number;
+	hits: number;
+	total: number;
 	accuracy: number;
 };
