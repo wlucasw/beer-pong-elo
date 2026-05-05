@@ -6,6 +6,7 @@ import type {
 	HallOfFameData,
 	HallOfFameDuoEntry,
 	HallOfFameMatchEntry,
+	HallOfFameOpponentEntry,
 	HallOfFamePlayerEntry,
 	HallOfFamePlayerMatchEntry
 } from '$lib/types';
@@ -224,6 +225,81 @@ export const GET: RequestHandler = async () => {
 		valuePct: Math.round(delta * 1000) / 10
 	});
 
+	const opponentStatsRaw = await prisma.$queryRaw<Array<{
+		playerId: number;
+		opponentId: number;
+		playerName: string;
+		opponentName: string;
+		games: bigint;
+		wins: bigint;
+		matchupWinRate: number;
+		matchupAccuracy: number;
+		playerGlobalWinRate: number;
+		playerGlobalAccuracy: number;
+	}>>`
+		WITH matchups AS (
+			SELECT ta."playerId" AS playerid, tb."playerId" AS opponentid, m.id AS matchid, m."winnerA" AS won
+			FROM "MatchTeamA" ta
+			JOIN "MatchTeamB" tb ON ta."matchId" = tb."matchId"
+			JOIN "Match" m ON m.id = ta."matchId" AND m.status = 'FINISHED'
+			UNION ALL
+			SELECT tb."playerId", ta."playerId", m.id, m."winnerB"
+			FROM "MatchTeamB" tb
+			JOIN "MatchTeamA" ta ON tb."matchId" = ta."matchId"
+			JOIN "Match" m ON m.id = tb."matchId" AND m.status = 'FINISHED'
+		),
+		matchup_with_shots AS (
+			SELECT mu.playerid, mu.opponentid, mu.matchid, mu.won,
+			       COUNT(s.id) AS totalshots,
+			       SUM(CASE WHEN s.hit THEN 1 ELSE 0 END) AS hitshots
+			FROM matchups mu
+			LEFT JOIN "Shot" s ON s."matchId" = mu.matchid AND s."playerId" = mu.playerid
+			GROUP BY mu.playerid, mu.opponentid, mu.matchid, mu.won
+		),
+		matchup_agg AS (
+			SELECT playerid, opponentid,
+			       COUNT(*)::int AS games,
+			       SUM(CASE WHEN won THEN 1 ELSE 0 END)::int AS wins,
+			       SUM(totalshots)::int AS totalshots,
+			       SUM(hitshots)::int AS hitshots
+			FROM matchup_with_shots
+			GROUP BY playerid, opponentid
+			HAVING COUNT(*) >= ${MIN_GAMES_FOR_CAREER_STAT}
+		)
+		SELECT ma.playerid AS "playerId",
+		       ma.opponentid AS "opponentId",
+		       p1.name AS "playerName",
+		       p2.name AS "opponentName",
+		       ma.games,
+		       ma.wins,
+		       ma.wins::float / ma.games AS "matchupWinRate",
+		       ma.hitshots::float / NULLIF(ma.totalshots, 0) AS "matchupAccuracy",
+		       CASE WHEN s1."matchesPlayed" > 0 THEN s1.wins::float / s1."matchesPlayed" ELSE 0 END AS "playerGlobalWinRate",
+		       s1.accuracy AS "playerGlobalAccuracy"
+		FROM matchup_agg ma
+		JOIN "Player" p1 ON p1.id = ma.playerid
+		JOIN "Player" p2 ON p2.id = ma.opponentid
+		JOIN "Statistics" s1 ON s1."playerId" = ma.playerid
+	`;
+
+	type OpponentRow = (typeof opponentStatsRaw)[number] & { winRateDelta: number; accuracyDelta: number };
+
+	const opponentRows: OpponentRow[] = opponentStatsRaw.map((r) => ({
+		...r,
+		winRateDelta: r.matchupWinRate - r.playerGlobalWinRate,
+		accuracyDelta: (r.matchupAccuracy ?? 0) - r.playerGlobalAccuracy
+	}));
+
+	const toOpponentEntry = (r: OpponentRow, rank: number, delta: number): HallOfFameOpponentEntry => ({
+		rank,
+		playerId: r.playerId,
+		playerName: r.playerName,
+		opponentId: r.opponentId,
+		opponentName: r.opponentName,
+		games: Number(r.games),
+		valuePct: Math.round(delta * 1000) / 10
+	});
+
 	const sortedEloSwings = [...allMatchesForElo]
 		.sort((a, b) => Math.abs(b.eloVariationTeamA!) - Math.abs(a.eloVariationTeamA!))
 		.slice(0, 3);
@@ -324,7 +400,23 @@ export const GET: RequestHandler = async () => {
 		worstDuoAccuracy: [...duoRows]
 			.sort((a, b) => a.accuracyDelta - b.accuracyDelta)
 			.slice(0, 3)
-			.map((r, i) => toDuoEntry(r, i + 1, r.accuracyDelta))
+			.map((r, i) => toDuoEntry(r, i + 1, r.accuracyDelta)),
+		bestOpponentWinRate: [...opponentRows]
+			.sort((a, b) => b.winRateDelta - a.winRateDelta)
+			.slice(0, 3)
+			.map((r, i) => toOpponentEntry(r, i + 1, r.winRateDelta)),
+		worstOpponentWinRate: [...opponentRows]
+			.sort((a, b) => a.winRateDelta - b.winRateDelta)
+			.slice(0, 3)
+			.map((r, i) => toOpponentEntry(r, i + 1, r.winRateDelta)),
+		bestOpponentAccuracy: [...opponentRows]
+			.sort((a, b) => b.accuracyDelta - a.accuracyDelta)
+			.slice(0, 3)
+			.map((r, i) => toOpponentEntry(r, i + 1, r.accuracyDelta)),
+		worstOpponentAccuracy: [...opponentRows]
+			.sort((a, b) => a.accuracyDelta - b.accuracyDelta)
+			.slice(0, 3)
+			.map((r, i) => toOpponentEntry(r, i + 1, r.accuracyDelta))
 	};
 
 	return json(response);

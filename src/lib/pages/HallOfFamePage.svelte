@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import HallOfFameCard from '$lib/components/HallOfFameCard.svelte';
-	import type { HallOfFameCardEntry, HallOfFameDuoEntry, HallOfFameData } from '$lib/types';
+	import type { HallOfFameCardEntry, HallOfFameDuoEntry, HallOfFameOpponentEntry, HallOfFameData } from '$lib/types';
 	import { MIN_GAMES_FOR_CAREER_STAT, MIN_SHOTS_FOR_SINGLE_GAME_ACCURACY } from '$lib/constants';
 
 	let data: HallOfFameData | null = null;
@@ -31,6 +31,17 @@
 
 	function formatTeams(teamA: string[], teamB: string[]) {
 		return `${teamA.join(' & ')} vs ${teamB.join(' & ')}`;
+	}
+
+	function opponentToEntry(e: HallOfFameOpponentEntry): HallOfFameCardEntry {
+		const sign = e.valuePct >= 0 ? '+' : '';
+		return {
+			rank: e.rank,
+			label: `${e.playerName} face à ${e.opponentName}`,
+			subLabel: `${e.games} partie${e.games > 1 ? 's' : ''}`,
+			value: `${sign}${e.valuePct}%`,
+			onClick: () => navigateToPlayer(e.playerId)
+		};
 	}
 
 	function duoToEntry(e: HallOfFameDuoEntry): HallOfFameCardEntry {
@@ -144,6 +155,26 @@
 					title: '😬 Duo qui plombe le plus la précision',
 					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties ensemble`,
 					entries: data.worstDuoAccuracy.map(duoToEntry)
+				},
+				{
+					title: '😤 Meilleur winrate contre un adversaire',
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties face à face`,
+					entries: data.bestOpponentWinRate.map(opponentToEntry)
+				},
+				{
+					title: '😰 Plus grande bête noire',
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties face à face`,
+					entries: data.worstOpponentWinRate.map(opponentToEntry)
+				},
+				{
+					title: '🎯 Plus précis contre un adversaire',
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties face à face`,
+					entries: data.bestOpponentAccuracy.map(opponentToEntry)
+				},
+				{
+					title: '😵 Moins précis contre un adversaire',
+					subtitle: `Min. ${MIN_GAMES_FOR_CAREER_STAT} parties face à face`,
+					entries: data.worstOpponentAccuracy.map(opponentToEntry)
 				}
 			]
 		: [];

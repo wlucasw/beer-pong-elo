@@ -188,6 +188,16 @@ export type HallOfFameDuoEntry = {
 	valuePct: number; // delta in percentage points (already * 100)
 };
 
+export type HallOfFameOpponentEntry = {
+	rank: number;
+	playerId: number;
+	playerName: string;
+	opponentId: number;
+	opponentName: string;
+	games: number;
+	valuePct: number;
+};
+
 export type HallOfFameData = {
 	longestGames: HallOfFameMatchEntry[];
 	shortestGames: HallOfFameMatchEntry[];
@@ -201,4 +211,8 @@ export type HallOfFameData = {
 	worstDuoWinRate: HallOfFameDuoEntry[];
 	bestDuoAccuracy: HallOfFameDuoEntry[];
 	worstDuoAccuracy: HallOfFameDuoEntry[];
+	bestOpponentWinRate: HallOfFameOpponentEntry[];
+	worstOpponentWinRate: HallOfFameOpponentEntry[];
+	bestOpponentAccuracy: HallOfFameOpponentEntry[];
+	worstOpponentAccuracy: HallOfFameOpponentEntry[];
 };
