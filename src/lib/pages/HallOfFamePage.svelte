@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import HallOfFameCard from '$lib/components/HallOfFameCard.svelte';
-	import type { HallOfFameCardEntry, HallOfFameData } from '$lib/types';
+	import type { HallOfFameCardEntry, HallOfFameDuoEntry, HallOfFameData } from '$lib/types';
 
 	let data: HallOfFameData | null = null;
 	let loading = true;
@@ -30,6 +30,16 @@
 
 	function formatTeams(teamA: string[], teamB: string[]) {
 		return `${teamA.join(' & ')} vs ${teamB.join(' & ')}`;
+	}
+
+	function duoToEntry(e: HallOfFameDuoEntry): HallOfFameCardEntry {
+		const sign = e.valuePct >= 0 ? '+' : '';
+		return {
+			rank: e.rank,
+			label: `${e.player1Name} & ${e.player2Name}`,
+			subLabel: `${e.games} partie${e.games > 1 ? 's' : ''} ensemble`,
+			value: `${sign}${e.valuePct}%`
+		};
 	}
 
 	$: categories = data
@@ -113,6 +123,26 @@
 						value: `${e.value} contres`,
 						onClick: () => navigateToMatch(e.matchId)
 					}))
+				},
+				{
+					title: '🤝 Duo qui boost le plus le winrate',
+					subtitle: `Min. 3 parties ensemble`,
+					entries: data.bestDuoWinRate.map(duoToEntry)
+				},
+				{
+					title: '💔 Duo qui plombe le plus le winrate',
+					subtitle: `Min. 3 parties ensemble`,
+					entries: data.worstDuoWinRate.map(duoToEntry)
+				},
+				{
+					title: '✨ Duo qui boost le plus la précision',
+					subtitle: `Min. 3 parties ensemble`,
+					entries: data.bestDuoAccuracy.map(duoToEntry)
+				},
+				{
+					title: '😬 Duo qui plombe le plus la précision',
+					subtitle: `Min. 3 parties ensemble`,
+					entries: data.worstDuoAccuracy.map(duoToEntry)
 				}
 			]
 		: [];

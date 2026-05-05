@@ -17,7 +17,7 @@
 	<div class="space-y-2">
 		{#each entries as entry (entry.rank)}
 			<button
-				class="flex w-full cursor-pointer items-center gap-3 rounded p-2 text-left hover:bg-gray-50"
+				class="flex w-full items-center gap-3 rounded p-2 text-left {entry.onClick ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}"
 				onclick={entry.onClick}
 			>
 				<span class="text-xl">{MEDALS[entry.rank - 1]}</span>

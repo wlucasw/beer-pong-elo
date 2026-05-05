@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/prisma';
 import type {
 	HallOfFameData,
+	HallOfFameDuoEntry,
 	HallOfFameMatchEntry,
 	HallOfFamePlayerEntry,
 	HallOfFamePlayerMatchEntry
@@ -131,6 +132,99 @@ export const GET: RequestHandler = async () => {
 		})
 	]);
 
+	const MIN_GAMES_FOR_DUO = MIN_GAMES_FOR_CAREER_STAT;
+
+	const duoStatsRaw = await prisma.$queryRaw<Array<{
+		player1Id: number;
+		player2Id: number;
+		player1Name: string;
+		player2Name: string;
+		games: bigint;
+		wins: bigint;
+		totalShots: bigint;
+		hitShots: bigint;
+		player1WinRate: number;
+		player2WinRate: number;
+		player1Accuracy: number;
+		player2Accuracy: number;
+	}>>`
+		WITH duo_games AS (
+			SELECT LEAST(ta1."playerId", ta2."playerId") AS player1Id,
+			       GREATEST(ta1."playerId", ta2."playerId") AS player2Id,
+			       ta1."matchId", m."winnerA" AS won
+			FROM "MatchTeamA" ta1
+			JOIN "MatchTeamA" ta2 ON ta1."matchId" = ta2."matchId" AND ta1."playerId" < ta2."playerId"
+			JOIN "Match" m ON m.id = ta1."matchId" AND m.status = 'FINISHED'
+			UNION ALL
+			SELECT LEAST(tb1."playerId", tb2."playerId"),
+			       GREATEST(tb1."playerId", tb2."playerId"),
+			       tb1."matchId", m."winnerB"
+			FROM "MatchTeamB" tb1
+			JOIN "MatchTeamB" tb2 ON tb1."matchId" = tb2."matchId" AND tb1."playerId" < tb2."playerId"
+			JOIN "Match" m ON m.id = tb1."matchId" AND m.status = 'FINISHED'
+		),
+		duo_with_shots AS (
+			SELECT dg.player1Id, dg.player2Id, dg."matchId", dg.won,
+			       COUNT(s.id) AS totalShots,
+			       SUM(CASE WHEN s.hit THEN 1 ELSE 0 END) AS hitShots
+			FROM duo_games dg
+			LEFT JOIN "Shot" s ON s."matchId" = dg."matchId"
+			    AND (s."playerId" = dg.player1Id OR s."playerId" = dg.player2Id)
+			GROUP BY dg.player1Id, dg.player2Id, dg."matchId", dg.won
+		),
+		duo_agg AS (
+			SELECT player1Id, player2Id,
+			       COUNT(*)::int AS games,
+			       SUM(CASE WHEN won THEN 1 ELSE 0 END)::int AS wins,
+			       SUM(totalShots)::int AS totalShots,
+			       SUM(hitShots)::int AS hitShots
+			FROM duo_with_shots
+			GROUP BY player1Id, player2Id
+			HAVING COUNT(*) >= ${MIN_GAMES_FOR_DUO}
+		)
+		SELECT da.player1Id AS "player1Id", da.player2Id AS "player2Id",
+		       p1.name AS "player1Name", p2.name AS "player2Name",
+		       da.games, da.wins, da.totalShots AS "totalShots", da.hitShots AS "hitShots",
+		       CASE WHEN s1."matchesPlayed" > 0 THEN s1.wins::float / s1."matchesPlayed" ELSE 0 END AS "player1WinRate",
+		       CASE WHEN s2."matchesPlayed" > 0 THEN s2.wins::float / s2."matchesPlayed" ELSE 0 END AS "player2WinRate",
+		       s1.accuracy AS "player1Accuracy",
+		       s2.accuracy AS "player2Accuracy"
+		FROM duo_agg da
+		JOIN "Player" p1 ON p1.id = da.player1Id
+		JOIN "Player" p2 ON p2.id = da.player2Id
+		JOIN "Statistics" s1 ON s1."playerId" = da.player1Id
+		JOIN "Statistics" s2 ON s2."playerId" = da.player2Id
+	`;
+
+	type DuoRow = (typeof duoStatsRaw)[number] & { winRateDelta: number; accuracyDelta: number };
+
+	const duoRows: DuoRow[] = duoStatsRaw.map((r) => {
+		const games = Number(r.games);
+		const wins = Number(r.wins);
+		const totalShots = Number(r.totalShots);
+		const hitShots = Number(r.hitShots);
+		const duoWinRate = wins / games;
+		const duoAccuracy = totalShots > 0 ? hitShots / totalShots : 0;
+		const avgWinRate = (r.player1WinRate + r.player2WinRate) / 2;
+		const avgAccuracy = (r.player1Accuracy + r.player2Accuracy) / 2;
+		return {
+			...r,
+			games: BigInt(games),
+			winRateDelta: duoWinRate - avgWinRate,
+			accuracyDelta: duoAccuracy - avgAccuracy
+		};
+	});
+
+	const toDuoEntry = (r: DuoRow, rank: number, delta: number): HallOfFameDuoEntry => ({
+		rank,
+		player1Id: r.player1Id,
+		player1Name: r.player1Name,
+		player2Id: r.player2Id,
+		player2Name: r.player2Name,
+		games: Number(r.games),
+		valuePct: Math.round(delta * 1000) / 10
+	});
+
 	const sortedEloSwings = [...allMatchesForElo]
 		.sort((a, b) => Math.abs(b.eloVariationTeamA!) - Math.abs(a.eloVariationTeamA!))
 		.slice(0, 3);
@@ -215,7 +309,23 @@ export const GET: RequestHandler = async () => {
 				createdAt: row.createdAt.toISOString(),
 				value: Math.round(row.accuracy * 1000) / 10
 			})
-		)
+		),
+		bestDuoWinRate: [...duoRows]
+			.sort((a, b) => b.winRateDelta - a.winRateDelta)
+			.slice(0, 3)
+			.map((r, i) => toDuoEntry(r, i + 1, r.winRateDelta)),
+		worstDuoWinRate: [...duoRows]
+			.sort((a, b) => a.winRateDelta - b.winRateDelta)
+			.slice(0, 3)
+			.map((r, i) => toDuoEntry(r, i + 1, r.winRateDelta)),
+		bestDuoAccuracy: [...duoRows]
+			.sort((a, b) => b.accuracyDelta - a.accuracyDelta)
+			.slice(0, 3)
+			.map((r, i) => toDuoEntry(r, i + 1, r.accuracyDelta)),
+		worstDuoAccuracy: [...duoRows]
+			.sort((a, b) => a.accuracyDelta - b.accuracyDelta)
+			.slice(0, 3)
+			.map((r, i) => toDuoEntry(r, i + 1, r.accuracyDelta))
 	};
 
 	return json(response);

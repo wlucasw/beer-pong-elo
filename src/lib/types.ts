@@ -149,7 +149,7 @@ export type HallOfFameCardEntry = {
 	label: string;
 	subLabel?: string;
 	value: string;
-	onClick: () => void;
+	onClick?: () => void;
 };
 
 export type HallOfFameMatchEntry = {
@@ -178,6 +178,16 @@ export type HallOfFamePlayerMatchEntry = {
 	value: number;
 };
 
+export type HallOfFameDuoEntry = {
+	rank: number;
+	player1Id: number;
+	player1Name: string;
+	player2Id: number;
+	player2Name: string;
+	games: number;
+	valuePct: number; // delta in percentage points (already * 100)
+};
+
 export type HallOfFameData = {
 	longestGames: HallOfFameMatchEntry[];
 	shortestGames: HallOfFameMatchEntry[];
@@ -187,4 +197,8 @@ export type HallOfFameData = {
 	biggestEloSwings: HallOfFameMatchEntry[];
 	bestCounterAccuracy: HallOfFamePlayerEntry[];
 	bestSingleGameAccuracy: HallOfFamePlayerMatchEntry[];
+	bestDuoWinRate: HallOfFameDuoEntry[];
+	worstDuoWinRate: HallOfFameDuoEntry[];
+	bestDuoAccuracy: HallOfFameDuoEntry[];
+	worstDuoAccuracy: HallOfFameDuoEntry[];
 };
