@@ -89,8 +89,8 @@
 			.append('title')
 			.text((d: CupAccuracyPoint) =>
 				d.total === 0
-					? `${d.cupsRemaining} coupe(s): aucune donnée`
-					: `${d.cupsRemaining} coupe(s): ${d.accuracy.toFixed(1)}% (${d.hits}/${d.total} tirs)`
+					? `${d.cupsRemaining} verre(s): aucune donnée`
+					: `${d.cupsRemaining} verre(s): ${d.accuracy.toFixed(1)}% (${d.hits}/${d.total} tirs)`
 			);
 
 		// Accuracy labels on bars (only if bar is tall enough)

@@ -43,4 +43,4 @@
 		})());
 </script>
 
-<MatchupTable title="🔁 Matchups by opponent" nameHeader="Adversaire" {items} {loading} isOpponent={true} />
+<MatchupTable title="🔁 Matchups par adversaire" nameHeader="Adversaire" {items} {loading} isOpponent={true} />

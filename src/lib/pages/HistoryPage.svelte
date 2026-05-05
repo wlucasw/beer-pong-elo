@@ -18,12 +18,12 @@
 </script>
 
 <main class="flex flex-col items-center space-y-6 p-6">
-	<h1 class="text-2xl font-bold">📜 Match History</h1>
+	<h1 class="text-2xl font-bold">📜 Historique des parties</h1>
 
 	{#if loading}
-		<p class="text-gray-500">Loading...</p>
+		<p class="text-gray-500">Chargement...</p>
 	{:else if matches.length === 0}
-		<p class="text-gray-500">No matches recorded yet.</p>
+		<p class="text-gray-500">Aucune partie enregistrée.</p>
 	{:else}
 		<div class="flex w-full flex-col items-center space-y-6">
 			{#each matches as match}
@@ -70,7 +70,7 @@
 						{:else if match.winnerB}
 							<Badge color="red" size="lg" class="px-4 py-1">🏆 Team Robin won!</Badge>
 						{:else}
-							<Badge color="gray" size="lg" class="px-4 py-1">Match pending result</Badge>
+							<Badge color="gray" size="lg" class="px-4 py-1">Résultat en attente</Badge>
 						{/if}
 					</div>
 				</Card>

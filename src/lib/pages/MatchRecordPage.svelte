@@ -292,9 +292,9 @@
 
 <main class="flex flex-col items-center space-y-6 p-6">
 	{#if loading}
-		<p>Loading...</p>
+		<p>Chargement...</p>
 	{:else}
-		<h1 class="text-xl font-bold">🎯 Record Match #{match.id}</h1>
+		<h1 class="text-xl font-bold">🎯 Partie #{match.id}</h1>
 
 		<div class="grid grid-cols-{isFirstShot ? 2 : 1} max-w-4xl gap-6">
 			{#if isFirstShot}
@@ -349,7 +349,7 @@
 
 		<div class="mt-6 flex gap-4">
 			<Button color="gray" size="md" onclick={undoLastShot} disabled={shots.length === 0}>
-				↩️ Undo
+				↩️ Défaire
 			</Button>
 			<Button color="red" size="md" onclick={() => (showWinnerModal = true)}>
 				🏁 Fin de partie

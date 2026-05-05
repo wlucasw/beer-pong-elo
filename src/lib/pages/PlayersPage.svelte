@@ -85,7 +85,7 @@
 </script>
 
 <main class="flex flex-col items-center space-y-6 p-6">
-	<h1 class="text-2xl font-bold">🏆 Leaderboard</h1>
+	<h1 class="text-2xl font-bold">🏆 Classement</h1>
 	<div class="space-y-3 flex row items-center">
 		<label for="show-all-players" class="m-0 text-sm font-medium text-gray-700"
 			>Afficher tous les joueurs</label
@@ -97,7 +97,7 @@
 		<Table>
 			<TableHead>
 				<TableHeadCell class="w-16 text-center">#</TableHeadCell>
-				<TableHeadCell>Player</TableHeadCell>
+				<TableHeadCell>Joueur</TableHeadCell>
 				<TableHeadCell
 					class="text-right cursor-pointer select-none hover:bg-gray-100"
 					onclick={() => setSort('elo')}
@@ -108,7 +108,7 @@
 					class="text-right cursor-pointer select-none hover:bg-gray-100"
 					onclick={() => setSort('matchesPlayed')}
 				>
-					Games{indicators.matchesPlayed}
+					Parties{indicators.matchesPlayed}
 				</TableHeadCell>
 				<TableHeadCell
 					class="text-right cursor-pointer select-none hover:bg-gray-100"
@@ -120,7 +120,7 @@
 					class="text-right cursor-pointer select-none hover:bg-gray-100"
 					onclick={() => setSort('accuracy')}
 				>
-					Precision{indicators.accuracy}
+					Précision{indicators.accuracy}
 				</TableHeadCell>
 			</TableHead>
 			<TableBody>
@@ -151,10 +151,10 @@
 	<div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
 		<Input
 			type="text"
-			placeholder="Enter player name"
+			placeholder="Nom du joueur"
 			bind:value={newPlayerName}
 			onkeydown={(e) => e.key === 'Enter' && addPlayer()}
 		/>
-		<Button onclick={addPlayer} class="whitespace-nowrap">+ Add Player</Button>
+		<Button onclick={addPlayer} class="whitespace-nowrap">+ Ajouter</Button>
 	</div>
 </main>

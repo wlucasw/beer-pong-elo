@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage.svelte';
 import PlayersPage from './pages/PlayersPage.svelte';
 import PlayerPage from './pages/PlayerPage.svelte';
 import HistoryPage from './pages/HistoryPage.svelte';
+import HallOfFamePage from './pages/HallOfFamePage.svelte';
 import MatchSetupPage from './pages/MatchSetupPage.svelte';
 import MatchRecordPage from './pages/MatchRecordPage.svelte';
 import MatchRecapPage from './pages/MatchRecapPage.svelte';
@@ -14,6 +15,7 @@ export const routes = {
     '/players': PlayersPage,
     '/player/:id': PlayerPage,
     '/history': HistoryPage,
+    '/hall-of-fame': HallOfFamePage,
     '/whitelist': WhitelistPage,
     '/match/setup': MatchSetupPage,
     '/match/:id/record': MatchRecordPage,

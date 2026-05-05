@@ -143,3 +143,48 @@ export type CupAccuracyPoint = {
 	total: number;
 	accuracy: number;
 };
+
+export type HallOfFameCardEntry = {
+	rank: number;
+	label: string;
+	subLabel?: string;
+	value: string;
+	onClick: () => void;
+};
+
+export type HallOfFameMatchEntry = {
+	rank: number;
+	matchId: number;
+	value: number;
+	createdAt: string;
+	teamA: string[];
+	teamB: string[];
+	winnerA: boolean;
+};
+
+export type HallOfFamePlayerEntry = {
+	rank: number;
+	playerId: number;
+	playerName: string;
+	value: number;
+};
+
+export type HallOfFamePlayerMatchEntry = {
+	rank: number;
+	playerId: number;
+	playerName: string;
+	matchId: number;
+	createdAt: string;
+	value: number;
+};
+
+export type HallOfFameData = {
+	longestGames: HallOfFameMatchEntry[];
+	shortestGames: HallOfFameMatchEntry[];
+	mostBouncesPerGame: HallOfFamePlayerEntry[];
+	mostCountersInGame: HallOfFameMatchEntry[];
+	mostCountersScoredInGame: HallOfFamePlayerMatchEntry[];
+	biggestEloSwings: HallOfFameMatchEntry[];
+	bestCounterAccuracy: HallOfFamePlayerEntry[];
+	bestSingleGameAccuracy: HallOfFamePlayerMatchEntry[];
+};

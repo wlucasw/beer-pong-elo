@@ -64,7 +64,7 @@
 
 <main class="flex flex-col items-center space-y-6 p-6">
 	{#if loading}
-		<p>Loading...</p>
+		<p>Chargement...</p>
 	{:else if player}
 		<h1 class="text-2xl font-bold">
 			{player.name === 'Robin' ? 'Chef de projet : ' : ''}{player.name}
@@ -79,7 +79,7 @@
 			</p>
 			<div class="mt-3 grid grid-cols-3 items-center justify-items-center gap-2 text-sm">
 				<p class="text-gray-600">
-					Played: <span class="font-semibold">{player.matchesPlayed}</span>
+					Joués : <span class="font-semibold">{player.matchesPlayed}</span>
 				</p>
 				<p class="text-green-600">Victoire: <span class="font-semibold">{player.wins}</span></p>
 				<p class="text-red-600">Défaites: <span class="font-semibold">{player.losses}</span></p>
@@ -110,7 +110,7 @@
 				{#if cupAccuracyData.length > 0}
 				{@const clutch = clutchRate(cupAccuracyData)}
 				<p style="color: hsl({(120 * clutch) / 100}, 70%, 45%)">
-					Clutch (≤3 coupes):
+					Clutch (≤3 verres):
 					<span class="font-semibold">{clutch.toFixed(1)}%</span>
 				</p>
 				{/if}
@@ -118,7 +118,7 @@
 		</Card>
 
 		<!-- Elo variation chart -->
-		<CollapsibleCard title="📈 Elo over time" className="w-full max-w-3xl p-4">
+		<CollapsibleCard title="📈 Elo au fil du temps" className="w-full max-w-3xl p-4">
 			<div slot="actions" class="flex items-center gap-3">
 				<p class="text-sm text-gray-600">Afficher les parties par date</p>
 				<Toggle color="blue" bind:checked={byDate} />

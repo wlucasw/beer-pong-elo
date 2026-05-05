@@ -21,10 +21,13 @@
 	</a>
 	<nav class="space-x-4">
 		<a href="/players" class="hover:underline" onclick={(e) => { e.preventDefault(); navigateTo('/players'); }}
-			>Leaderboard</a
+			>Classement</a
 		>
 		<a href="/history" class="hover:underline" onclick={(e) => { e.preventDefault(); navigateTo('/history'); }}
-			>History</a
+			>Historique</a
+		>
+		<a href="/hall-of-fame" class="hover:underline" onclick={(e) => { e.preventDefault(); navigateTo('/hall-of-fame'); }}
+			>Hall of Fame</a
 		>
 	</nav>
 </header>
