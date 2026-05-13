@@ -22,6 +22,9 @@
 	let containerEl: HTMLDivElement;
 	let svgEl: SVGSVGElement;
 
+	type Tooltip = { visible: boolean; x: number; y: number; label: string; elo: number };
+	let tooltip: Tooltip = { visible: false, x: 0, y: 0, label: '', elo: 0 };
+
 	let resizeObserver: ResizeObserver | null = null;
 
 	function computeSeries() {
@@ -127,7 +130,7 @@
 			.attr('stroke-width', 2)
 			.attr('d', lineGen);
 
-		// Points with native title tooltip
+		// Points with hover tooltip
 		g.append('g')
 			.selectAll('circle')
 			.data(data as SeriesPoint[])
@@ -136,14 +139,36 @@
 				xMode === 'date' ? (x as any)(d.date) : (x as any)(i + 1)
 			)
 			.attr('cy', (d: SeriesPoint) => y(d.elo))
-			.attr('r', 3)
+			.attr('r', 5)
 			.attr('fill', '#1d4ed8')
-			.append('title')
-			.text((d: SeriesPoint, i: number) => {
-				if (xMode === 'date') {
-					return `${d.date.toLocaleDateString()}\nElo: ${d.elo}`;
-				}
-				return i === 0 ? `Start\nElo: ${d.elo}` : `Game #${i}\nElo: ${d.elo}`;
+			.style('cursor', 'pointer')
+			.on('mouseover', function (event: MouseEvent, d: SeriesPoint) {
+				const i = data.indexOf(d);
+				const rect = containerEl.getBoundingClientRect();
+				const label =
+					xMode === 'date'
+						? d.date.toLocaleDateString('fr-FR')
+						: i === 0
+							? 'Départ'
+							: `Partie #${i}`;
+				tooltip = {
+					visible: true,
+					x: event.clientX - rect.left,
+					y: event.clientY - rect.top,
+					label,
+					elo: d.elo
+				};
+			})
+			.on('mousemove', function (event: MouseEvent) {
+				const rect = containerEl.getBoundingClientRect();
+				tooltip = {
+					...tooltip,
+					x: event.clientX - rect.left,
+					y: event.clientY - rect.top
+				};
+			})
+			.on('mouseout', function () {
+				tooltip = { ...tooltip, visible: false };
 			});
 	}
 
@@ -168,8 +193,17 @@
 	$: (matches, startingElo, height, margin, xMode, draw());
 </script>
 
-<div bind:this={containerEl} class="w-full">
+<div bind:this={containerEl} class="relative w-full">
 	<svg bind:this={svgEl} />
+	{#if tooltip.visible}
+		<div
+			class="pointer-events-none absolute z-10 rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg"
+			style="left: {tooltip.x + 12}px; top: {tooltip.y - 28}px;"
+		>
+			<div class="font-medium">{tooltip.label}</div>
+			<div>Élo : {tooltip.elo}</div>
+		</div>
+	{/if}
 </div>
 
 <style>
