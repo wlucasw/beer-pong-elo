@@ -318,6 +318,7 @@
 		<p>Chargement...</p>
 	{:else}
 		<h1 class="text-xl font-bold">🎯 Partie #{match.id}</h1>
+		<h2 class="text-l font-bold">Score {cups.reduce((acc, cup) => acc + cup.reduce((acc, innerCup) =>  isHitA(innerCup) ? acc + 1 : acc , 0), 0)} - {cups.reduce((acc, cup) => acc + cup.reduce((acc, innerCup) =>  isHitB(innerCup) ? acc + 1 : acc , 0), 0)}</h2>
 
 		<div class="grid grid-cols-{isFirstShot ? 2 : 1} max-w-4xl gap-6">
 			{#if isFirstShot}
