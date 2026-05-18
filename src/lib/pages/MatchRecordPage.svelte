@@ -252,10 +252,15 @@
 	}
 
 	async function recordBounce(playerId: number, team: 'A' | 'B') {
+		if (isFirstShot) {
+			isTeamAmineFirst = team === 'A';
+			isFirstShot = false;
+		}
 		const lastShot = shots
 			.filter((s) => s.team === team)
 			.sort((a, b) => b.sequence - a.sequence)[0];
 		const nextSequence = lastShot ? lastShot.sequence + 1 : 1;
+		numberOfShotsInCurrentRound += 1;
 
 		await fetch('/api/shot/bounce', {
 			method: 'POST',
@@ -287,6 +292,24 @@
 			}
 		];
 		selectedCups = [];
+				const numberOfHitsForTeam = shots
+			.filter((s) => s.team === team)
+			.reduce(
+				(count, s) => (s.team === team && s.bounceCup ? count + 2 : s.hit ? count + 1 : count),
+				0
+			);
+
+		if (numberToCounter > 0) {
+			numberToCounter -= 1;
+			if (numberToCounter === 0) {
+				isCounter = false;
+			}
+		}
+		if (numberOfHitsForTeam >= 10) {
+			isToBeCounter = true;
+			numberToBeCountered += 1;
+		}
+		advanceRoundIfNeeded();
 	}
 </script>
 
