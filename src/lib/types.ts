@@ -36,6 +36,8 @@ export type PlayerLite = { name: string; elo: number };
 
 export type TeamEntry = { player: PlayerLite };
 
+export type ShotStat = { playerName: string; hits: number; total: number };
+
 export type MatchLite = {
 	id: number;
 	createdAt: string;
@@ -43,6 +45,7 @@ export type MatchLite = {
 	teamRobinSide: TeamEntry[];
 	winnerA: boolean;
 	winnerB: boolean;
+	shotStats: ShotStat[];
 };
 
 export type MatchTeamEntry = {

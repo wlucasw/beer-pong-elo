@@ -3,11 +3,42 @@
 	import { Card, Badge } from 'flowbite-svelte';
 	import type { MatchLite } from '$lib/types';
 
+	type PlayerStat = { name: string; wins: number; games: number; hits: number; shots: number };
+
 	type MatchGroup = {
 		key: string;
 		label: string;
 		matches: MatchLite[];
+		playerStats: PlayerStat[];
 	};
+
+	function getPlayerStats(groupMatches: MatchLite[]): PlayerStat[] {
+		const stats: Record<string, PlayerStat> = {};
+
+		const ensure = (name: string) => {
+			stats[name] ??= { name, wins: 0, games: 0, hits: 0, shots: 0 };
+		};
+
+		for (const match of groupMatches) {
+			for (const { player } of match.teamAmineSide) {
+				ensure(player.name);
+				stats[player.name].games++;
+				if (match.winnerA) stats[player.name].wins++;
+			}
+			for (const { player } of match.teamRobinSide) {
+				ensure(player.name);
+				stats[player.name].games++;
+				if (match.winnerB) stats[player.name].wins++;
+			}
+			for (const s of match.shotStats) {
+				ensure(s.playerName);
+				stats[s.playerName].hits += s.hits;
+				stats[s.playerName].shots += s.total;
+			}
+		}
+
+		return Object.values(stats).sort((a, b) => b.wins / b.games - a.wins / a.games);
+	}
 
 	let matches: MatchLite[] = [];
 	let loading = true;
@@ -34,13 +65,13 @@
 	$: groups = Object.entries(
 		matches.reduce((acc: Record<string, MatchGroup>, match) => {
 			const key = getSessionKey(new Date(match.createdAt));
-			if (!acc[key]) acc[key] = { key, label: getSessionLabel(key), matches: [] };
+			if (!acc[key]) acc[key] = { key, label: getSessionLabel(key), matches: [], playerStats: [] };
 			acc[key].matches.push(match);
 			return acc;
 		}, {})
 	)
 		.sort(([a], [b]) => b.localeCompare(a))
-		.map(([, group]) => group);
+		.map(([, group]) => ({ ...group, playerStats: getPlayerStats(group.matches) }));
 
 	function toggleGroup(key: string): void {
 		collapsedGroups = { ...collapsedGroups, [key]: !collapsedGroups[key] };
@@ -76,7 +107,32 @@
 					</button>
 
 					{#if !collapsedGroups[group.key]}
-						<div class="mt-3 flex flex-col space-y-4 items-center">
+						<div class="mt-2 grid grid-cols-4 gap-x-4 gap-y-1 px-1">
+							<span class="text-xs font-medium text-gray-400">Joueur</span>
+							<span class="text-xs font-medium text-gray-400">Nb games</span>
+							<span class="text-xs font-medium text-gray-400">Winrate</span>
+							<span class="text-xs font-medium text-gray-400">Précision</span>
+							{#each group.playerStats as stat}
+								<span class="text-sm text-gray-600 dark:text-gray-300">{stat.name}</span>
+								<span class="text-sm text-gray-600 dark:text-gray-300">{stat.games}</span>
+								<span class="flex items-center gap-1 text-sm">
+									<Badge color={stat.wins / stat.games >= 0.5 ? 'green' : 'red'}>
+										{Math.round((stat.wins / stat.games) * 100)}%
+									</Badge>
+								</span>
+								<span class="flex items-center gap-1 text-sm">
+									{#if stat.shots > 0}
+										<Badge color="blue">
+											{Math.round((stat.hits / stat.shots) * 100)}%
+										</Badge>
+									{:else}
+										<span class="text-gray-400">—</span>
+									{/if}
+								</span>
+							{/each}
+						</div>
+
+						<div class="mt-3 flex flex-col items-center space-y-4">
 							{#each group.matches as match}
 								<Card
 									class="w-full cursor-pointer p-4"
@@ -117,11 +173,11 @@
 
 									<div class="mt-4 text-center font-bold">
 										{#if match.winnerA}
-											<Badge color="blue" size="lg" class="px-4 py-1">🏆 Team Amine won!</Badge>
+											<Badge color="blue" class="px-4 py-1">🏆 Team Amine won!</Badge>
 										{:else if match.winnerB}
-											<Badge color="red" size="lg" class="px-4 py-1">🏆 Team Robin won!</Badge>
+											<Badge color="red" class="px-4 py-1">🏆 Team Robin won!</Badge>
 										{:else}
-											<Badge color="gray" size="lg" class="px-4 py-1">Résultat en attente</Badge>
+											<Badge color="gray" class="px-4 py-1">Résultat en attente</Badge>
 										{/if}
 									</div>
 								</Card>
