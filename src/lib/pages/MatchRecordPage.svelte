@@ -7,6 +7,7 @@
 	import QuickEndModal from '$lib/components/QuickEndModal.svelte';
 	import { navigate } from '$lib/router';
 	import type { Shot, ShotPost } from '$lib/types';
+	import AccurracyCard from '$lib/components/AccurracyCard.svelte';
 
 	export let params: { id?: string } = {};
 	let isTeamAmineFirst: boolean | undefined;
@@ -292,7 +293,7 @@
 			}
 		];
 		selectedCups = [];
-				const numberOfHitsForTeam = shots
+		const numberOfHitsForTeam = shots
 			.filter((s) => s.team === team)
 			.reduce(
 				(count, s) => (s.team === team && s.bounceCup ? count + 2 : s.hit ? count + 1 : count),
@@ -318,7 +319,15 @@
 		<p>Chargement...</p>
 	{:else}
 		<h1 class="text-xl font-bold">🎯 Partie #{match.id}</h1>
-		<h2 class="text-l font-bold">Score {cups.reduce((acc, cup) => acc + cup.reduce((acc, innerCup) =>  isHitA(innerCup) ? acc + 1 : acc , 0), 0)} - {cups.reduce((acc, cup) => acc + cup.reduce((acc, innerCup) =>  isHitB(innerCup) ? acc + 1 : acc , 0), 0)}</h2>
+		<h2 class="text-l font-bold">
+			Score {cups.reduce(
+				(acc, cup) => acc + cup.reduce((acc, innerCup) => (isHitA(innerCup) ? acc + 1 : acc), 0),
+				0
+			)} - {cups.reduce(
+				(acc, cup) => acc + cup.reduce((acc, innerCup) => (isHitB(innerCup) ? acc + 1 : acc), 0),
+				0
+			)}
+		</h2>
 
 		<div class="grid grid-cols-{isFirstShot ? 2 : 1} max-w-4xl gap-6">
 			{#if isFirstShot}
@@ -397,6 +406,27 @@
 					<GameRecap {shots} />
 				</div>
 			</div>
+
+			<AccurracyCard
+				playersTeamA={match.teamAmineSide.map(
+					(p: { playerId: number; player: { name: string } }) => ({
+						name: p.player.name,
+						accuracy:
+							(shots.reduce((acc, shot) => (shot.player === p.player.name && shot.hit ? acc + 1 : acc), 0) /
+								shots.filter((s) => s.player === p.player.name).length) *
+								100 || 0
+					})
+				)}
+				playersTeamB={match.teamRobinSide.map(
+					(p: { playerId: number; player: { name: string } }) => ({
+						name: p.player.name,
+						accuracy:
+							(shots.reduce((acc, shot) => (shot.player === p.player.name && shot.hit ? acc + 1 : acc), 0) /
+								shots.filter((s) => s.player === p.player.name).length) *
+								100 || 0
+					})
+				)}
+			/>
 		{/if}
 	{/if}
 </main>
